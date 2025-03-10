@@ -1,0 +1,43 @@
+# Ignore Flutter build files
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+
+# Ignore Android build files
+android/.gradle/
+android/build/
+android/app/build/
+
+# Ignore iOS build files
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# Ignore data files (các tệp dữ liệu lớn, chẳng hạn ảnh hoặc mô hình)
+data/
+
+# Ignore Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment
+venv/
+.env/
+
+# Ignore system files (macOS, Windows)
+.DS_Store
+Thumbs.db
+
+# Ignore TensorFlow Lite model if you don't want to track it in Git
+assets/model.tflite
+assets/labels.txt
+
+# Ignore logs and temp files
+*.log
+*.tmp
