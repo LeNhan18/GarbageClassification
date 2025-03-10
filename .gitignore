@@ -41,3 +41,5 @@ assets/labels.txt
 # Ignore logs and temp files
 *.log
 *.tmp
+
+.idea/
