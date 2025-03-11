@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+    <string>Chúng tôi cần truy cập camera của bạn để chụp ảnh/video.</string>
 </dict>
 </plist>
