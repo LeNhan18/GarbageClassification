@@ -20,9 +20,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Camera App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepPurple,
         visualDensity: VisualDensity.adaptivePlatformDensity,
-        scaffoldBackgroundColor: Colors.grey[200],  // Màu nền sáng
       ),
       home: CameraPreviewPage(camera: camera),
     );
@@ -72,31 +71,47 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () {
-              // Cài đặt thêm
+              // Chức năng cài đặt
             },
           ),
         ],
       ),
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Center(
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.rotationY(0.1)..rotateZ(0.05),  // Hiệu ứng 3D
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20), // Bo góc
-                  child: CameraPreview(_controller),
+      body: Container(
+        // Thêm Container với gradient background
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blueAccent, Colors.deepPurpleAccent],
+          ),
+        ),
+        child: FutureBuilder<void>(
+          future: _initializeControllerFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return Center(
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.rotationY(0.05)..rotateZ(0.05),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: CameraPreview(_controller),
+                    ),
+                  ),
                 ),
-              ),
-            );
-          } else {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },
+              );
+            } else {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -106,6 +121,8 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
         tooltip: 'Capture',
         child: Icon(Icons.camera_alt),
       ),
+
     );
+
   }
 }
