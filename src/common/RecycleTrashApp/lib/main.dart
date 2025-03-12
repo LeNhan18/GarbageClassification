@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 void main() async {
-  // Khởi tạo camera trước khi chạy ứng dụng
   WidgetsFlutterBinding.ensureInitialized();
   final cameras = await availableCameras();
   final firstCamera = cameras.first;
@@ -13,7 +14,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   final CameraDescription camera;
 
-  MyApp({required this.camera});
+  const MyApp({required this.camera});
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: true,
       ),
       home: CameraPreviewPage(camera: camera),
     );
@@ -31,7 +33,7 @@ class MyApp extends StatelessWidget {
 class CameraPreviewPage extends StatefulWidget {
   final CameraDescription camera;
 
-  CameraPreviewPage({required this.camera});
+  const CameraPreviewPage({required this.camera});
 
   @override
   _CameraPreviewPageState createState() => _CameraPreviewPageState();
@@ -40,6 +42,8 @@ class CameraPreviewPage extends StatefulWidget {
 class _CameraPreviewPageState extends State<CameraPreviewPage> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+  bool _isFlashOn = false;
+  double _zoomLevel = 1.0;
 
   @override
   void initState() {
@@ -50,79 +54,160 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    super.dispose();
+  }
+
+  Future<String> _takePicture() async {
+    try {
+      await _initializeControllerFuture;
+      final XFile file = await _controller.takePicture();
+      final directory = await getTemporaryDirectory();
+      final String filePath = '${directory.path}/photo_${DateTime.now()}.png';
+      await File(filePath).writeAsBytes(await file.readAsBytes());
+      return filePath;
+    } catch (e) {
+      print(e);
+      return '';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        title: Text(
-          'Camera Preview',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.deepPurple, Colors.blueAccent],
+              ),
+            ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Chức năng cài đặt
+          FutureBuilder<void>(
+            future: _initializeControllerFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: AspectRatio(
+                        aspectRatio: _controller.value.aspectRatio,
+                        child: Stack(
+                          children: [
+                            CameraPreview(_controller),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.2),
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.2),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              } else {
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              }
             },
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'Camera',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Roboto',
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isFlashOn = !_isFlashOn;
+                        _controller.setFlashMode(
+                          _isFlashOn ? FlashMode.torch : FlashMode.off,
+                        );
+                      });
+                    },
+                  ),
+                  FloatingActionButton(
+                    onPressed: () async {
+                      final String filePath = await _takePicture();
+                      if (filePath.isNotEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Photo saved at: $filePath'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    backgroundColor: Colors.white,
+                    child: const Icon(Icons.camera_alt, color: Colors.deepPurple),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.zoom_in, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _zoomLevel = (_zoomLevel + 0.5).clamp(1.0, 5.0);
+                        _controller.setZoomLevel(_zoomLevel);
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: Container(
-        // Thêm Container với gradient background
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blueAccent, Colors.deepPurpleAccent],
-          ),
-        ),
-        child: FutureBuilder<void>(
-          future: _initializeControllerFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return Center(
-                child: Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.rotationY(0.05)..rotateZ(0.05),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Card(
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: CameraPreview(_controller),
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Lấy ảnh hoặc video từ camera
-        },
-        backgroundColor: Colors.deepPurple,
-        tooltip: 'Capture',
-        child: Icon(Icons.camera_alt),
-      ),
-
     );
-
   }
 }
