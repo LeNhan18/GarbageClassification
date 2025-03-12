@@ -47,5 +47,9 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
     <string>Chúng tôi cần truy cập camera của bạn để chụp ảnh/video.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>We need to access your camera to take photos.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need to access your photo library to save photos.</string>
 </dict>
 </plist>
