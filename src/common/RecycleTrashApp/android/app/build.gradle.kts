@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.recycletrashapp"
-    compileSdk = 33
+    compileSdk = 35
     ndkVersion = "29.0.13113456"
 
     compileOptions {

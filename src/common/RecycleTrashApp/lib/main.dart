@@ -2,13 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final cameras = await availableCameras();
-  final firstCamera = cameras.first;
 
-  runApp(MyApp(camera: firstCamera));
+  // Yêu cầu quyền truy cập camera
+  await _requestCameraPermission();
+
+  final cameras = await availableCameras();
+  final firstCamera = cameras.isNotEmpty ? cameras.first : null;
+
+  if (firstCamera != null) {
+    runApp(MyApp(camera: firstCamera));
+  } else {
+    print("No camera found!");
+  }
+}
+
+Future<void> _requestCameraPermission() async {
+  // Kiểm tra và yêu cầu quyền camera
+  PermissionStatus status = await Permission.camera.request();
+  if (status != PermissionStatus.granted) {
+    print("Camera permission denied");
+  }
 }
 
 class MyApp extends StatelessWidget {
