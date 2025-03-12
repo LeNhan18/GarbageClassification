@@ -1,0 +1,21 @@
+workflows:
+  ios:
+    name: Build and test iOS
+    description: Build and test the iOS application
+    platform: macos
+    trigger:
+      events:
+        - push
+    jobs:
+      - job:
+          name: Install dependencies
+          run: |
+            flutter pub get
+      - job:
+          name: Build iOS
+          run: |
+            flutter build ios --release
+      - job:
+          name: Deploy to TestFlight
+          run: |
+            fastlane beta
