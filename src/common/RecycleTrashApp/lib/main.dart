@@ -76,7 +76,11 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
   Future<void> _initCamera() async {
     cameras = await availableCameras();
     _controller = CameraController(widget.camera, ResolutionPreset.high);
-    _initializeControllerFuture = _controller.initialize();
+    // Khởi tạo controller và _initializeControllerFuture tại đây
+    await _controller.initialize(); // Đảm bảo rằng controller đã được khởi tạo trước khi sử dụng
+    setState(() {
+      _initializeControllerFuture = Future.value(); // Đảm bảo _initializeControllerFuture đã được khởi tạo
+    });
   }
 
   @override
@@ -88,20 +92,20 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
   void _switchCamera() async {
     final lensDirection = _controller.description.lensDirection;
     CameraDescription newCamera;
-    
+
     if (lensDirection == CameraLensDirection.front) {
       newCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.back,
+            (camera) => camera.lensDirection == CameraLensDirection.back,
       );
     } else {
       newCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.front,
+            (camera) => camera.lensDirection == CameraLensDirection.front,
       );
     }
 
     await _controller.dispose();
     _controller = CameraController(newCamera, ResolutionPreset.high);
-    _initializeControllerFuture = _controller.initialize();
+    await _controller.initialize(); // Khởi tạo lại controller sau khi chuyển camera
     setState(() {
       _isFrontCamera = !_isFrontCamera;
     });
@@ -114,13 +118,14 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
       final directory = await getTemporaryDirectory();
       final String filePath = '${directory.path}/photo_${DateTime.now()}.png';
       await File(filePath).writeAsBytes(await file.readAsBytes());
-      
+
       // Save to gallery
       final result = await ImageGallerySaver.saveFile(filePath);
       if (result['isSuccess']) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ảnh đã được lưu vào thư viện',
+            content: Text(
+              'Ảnh đã được lưu vào thư viện',
               style: GoogleFonts.roboto(),
             ),
             backgroundColor: Colors.green,
@@ -128,7 +133,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
           ),
         );
       }
-      
+
       return filePath;
     } catch (e) {
       print(e);
