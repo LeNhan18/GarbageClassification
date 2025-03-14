@@ -1,12 +1,16 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.recycletrashapp">
     <!-- Thêm quyền truy cập camera ở đây, ngoài thẻ <application> -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 
     <application
+        android:name="com.example.recycletrashapp.RecycleTrashApp"
         android:label="recycletrashapp"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        tools:replace="android:label, android:name"
+        android:icon="@mipmap/ic_launcher"
+        tools:ignore="MissingClass">
         <activity
             android:name=".MainActivity"
             android:exported="true"
