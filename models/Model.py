@@ -1,20 +1,8 @@
 from keras.src.legacy.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
-# Xây dựng mô hình CNN
-def build_model(input_shape=(150, 150, 3)):
-    model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.Flatten(),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(1, activation='sigmoid')  # Sử dụng sigmoid cho 2 lớp (rác tái chế và không tái chế)
-    ])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model
-# Chuẩn bị dữ liệu huấn luyện và kiểm tra
+
+
+
 def prepare_data(train_dir, validation_dir, batch_size=32, img_size=(150, 150)):
     train_datagen = ImageDataGenerator(rescale=1./255, horizontal_flip=True, rotation_range=40, shear_range=0.2)
     test_datagen = ImageDataGenerator(rescale=1./255)
@@ -34,3 +22,16 @@ def prepare_data(train_dir, validation_dir, batch_size=32, img_size=(150, 150)):
     )
 
     return train_generator, validation_generator
+def build_model(input_shape=(150, 150, 3)):
+    model = models.Sequential([
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.Flatten(),
+        layers.Dense(64, activation='relu'),
+        layers.Dense(1, activation='sigmoid')  # Sử dụng sigmoid cho 2 lớp (rác tái chế và không tái chế)
+    ])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
