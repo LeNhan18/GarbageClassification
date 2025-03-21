@@ -12,4 +12,4 @@ def resize_image(input_dir,output_dir,size=(224,224)):
             img_resized.save(os.path.join(output_dir, filename))
         except Exception as e:
             print(f"Error processing {filename}: {e}")
-resize_image('Z:\HandleData','Z:\GarbageClassification\data\non_recyclable\trash')
+resize_image('Z:\Han-leData','Z:\GarbageClassification\data\non_recyclable\trash')
