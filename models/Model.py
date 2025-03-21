@@ -20,7 +20,6 @@ def prepare_data(train_dir, validation_dir, batch_size=32, img_size=(150, 150)):
         batch_size=batch_size,
         class_mode='binary'
     )
-
     return train_generator, validation_generator
 def build_model(input_shape=(224,224,3)):
     model = models.Senquential([
