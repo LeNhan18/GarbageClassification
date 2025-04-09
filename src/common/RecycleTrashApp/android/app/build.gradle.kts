@@ -1,13 +1,14 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.example.recycletrashapp"
-    compileSdk = 35
+    compileSdk = 34
     ndkVersion = "29.0.13113456"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -41,30 +42,23 @@ android {
 flutter {
     source = "../.."
 }
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    compileSdk = 34
-
-    defaultConfig {
-        applicationId = "RecycleTrashApp" // Thay bằng applicationId của bạn
-        minSdk = 21
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-}
 
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
+}
+
+// Cấu hình cho gallery_saver
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core-ktx:1.9.0")
+    }
+}
+
+// Cấu hình namespace cho gallery_saver
+afterEvaluate {
+    if (project.hasProperty("android")) {
+        project.extensions.configure<com.android.build.gradle.BaseExtension>("android") {
+            namespace = "com.example.recycletrashapp"
+        }
+    }
 }
