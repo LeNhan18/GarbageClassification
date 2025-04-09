@@ -88,5 +88,3 @@ python utils.py
 - Nên có >200 ảnh mỗi lớp để mô hình hoạt động tốt
 
 ---
-
-Chúc bạn thành công với ứng dụng phân loại rác bằng Flutter + CNN! 🚀
