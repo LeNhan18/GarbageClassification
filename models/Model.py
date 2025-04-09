@@ -22,25 +22,29 @@ def prepare_data(train_dir, validation_dir, batch_size=32, img_size=(150, 150)):
     )
 
     return train_generator, validation_generator
-def build_model(input_shape=(224,224,3)):
-    model = models.Senquential([
-        layers.Conv2D(32,(3,3) ,activation='relu',input_shape= input_shape ),
-        layers.MaxPooling2D((2,2)),
-        layers.Conv2D(64,(2,2),activation ='relu'),
-        layers.Maxpooling2D((2,2)),
-        layers.Conv2D(128,(2,2),activation ='relu'),
-        layers.MaxPooling2D(2,2),
-        layers.Conv2D(256,(2,2),activation= 'softmax'),
-        layers.MaxPooling2D((2,2)),
-        layers.Conv2D(512,(2,2),activation ='softmax'),
+
+
+def build_model(input_shape=(150, 150, 3)):
+    model = models.Sequential([
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        layers.MaxPooling2D((2, 2)),
+
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+
+        layers.Conv2D(128, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+
         layers.Flatten(),
         layers.Dense(128, activation='relu'),
         layers.Dropout(0.5),
         layers.Dense(64, activation='relu'),
         layers.Dropout(0.5),
-        layers.Dense(32, activation='relu'),
-        layers.Dropout(0.5),
         layers.Dense(1, activation='sigmoid')
     ])
-    model.compile(optimizer = 'adam',loss='binary_crossentropy',metrics =['accuracy'])
+
+    model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy'])
     return model
+
