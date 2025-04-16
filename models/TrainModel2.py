@@ -176,5 +176,5 @@ class_mapping = {v: k for k, v in class_indices.items()}
 with open(os.path.join(models_dir, 'class_mapping.json'), 'w') as f:
     json.dump(class_mapping, f)
 
-print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
+print(" Đã lưu thông tin ánh xạ lớp thành công!")
 print("Hoàn thành quá trình huấn luyện.")
