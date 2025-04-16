@@ -8,7 +8,7 @@ from tensorflow.keras import layers, models, regularizers, optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 
 # --- Cấu hình ---
-data_dir = 'data/recyclable/'  # Folder chứa plastic/, paper/, metal/... bên trong
+data_dir = 'Z:\\GarbageClassification\\data\\recyclable'  # Folder chứa plastic/, paper/, metal/... bên trong
 img_size = (150, 150)
 batch_size = 32
 epochs = 30
@@ -57,18 +57,18 @@ print(f"Số lượng lớp phân loại: {num_classes}")
 print(f"Tên các lớp: {list(train_generator.class_indices.keys())}")
 
 # --- Tạo thư mục lưu mô hình ---
-models_dir = 'models'
+models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model')
 os.makedirs(models_dir, exist_ok=True)
-logs_dir = 'logs'
+logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
 # --- Callbacks ---
 model_checkpoint = ModelCheckpoint(
-    os.path.join(models_dir, 'model2_best.h5'),
+    os.path.join(models_dir, 'model2_best.keras'),
     monitor='val_accuracy',
     save_best_only=True,
     mode='max',
-    verbose=1
+    verbose=1,
 )
 
 early_stopping = EarlyStopping(
