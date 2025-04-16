@@ -7,7 +7,7 @@ from tensorflow.keras import layers, models, regularizers
 from tensorflow.keras.applications import VGG16, ResNet50
 
 # --- Cấu hình ---
-data_dir = 'data/'  # Folder chứa "recyclable/" và "non_recyclable/"
+data_dir = 'Z:\\GarbageClassification\\data'  # Folder chứa "recyclable/" và "non_recyclable/"
 img_size = (150, 150)
 batch_size = 32
 epochs = 10
@@ -97,7 +97,7 @@ history = model.fit(
 )
 
 # --- Lưu mô hình ---
-model.save('models/model1_binary_recyclable.h5')
+model.save('model/model1_binary_recyclable.h5')
 print("✅ Đã lưu model1 thành công!")
 
 # --- Hiển thị tóm tắt kiến trúc mô hình ---
