@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
 from tensorflow.keras.applications import VGG16, ResNet50
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+import matplotlib.pyplot as plt
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data'  # Folder chứa "recyclable/" và "non_recyclable/"
@@ -149,3 +150,48 @@ print("✅ Đã lưu model1 thành công!")
 
 # --- Hiển thị tóm tắt kiến trúc mô hình ---
 model.summary()
+
+# --- Đánh giá mô hình ---
+print("\nĐánh giá chi tiết mô hình:")
+print("1. Đánh giá trên tập validation:")
+val_loss, val_accuracy, val_auc, val_precision, val_recall = model.evaluate(val_generator)
+print(f"- Loss: {val_loss:.4f}")
+print(f"- Accuracy: {val_accuracy:.4f}")
+print(f"- AUC: {val_auc:.4f}")
+print(f"- Precision: {val_precision:.4f}")
+print(f"- Recall: {val_recall:.4f}")
+
+# Vẽ biểu đồ
+plt.figure(figsize=(12, 4))
+
+# Biểu đồ accuracy
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Biểu đồ loss
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.tight_layout()
+plt.savefig(os.path.join(logs_dir, 'model1_training_history.png'))
+plt.close()
+
+# Lưu kết quả đánh giá
+with open(os.path.join(logs_dir, 'model1_evaluation.txt'), 'w') as f:
+    f.write(f"Validation Loss: {val_loss:.4f}\n")
+    f.write(f"Validation Accuracy: {val_accuracy:.4f}\n")
+    f.write(f"Validation AUC: {val_auc:.4f}\n")
+    f.write(f"Validation Precision: {val_precision:.4f}\n")
+    f.write(f"Validation Recall: {val_recall:.4f}\n")
+
+print("\nĐã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
