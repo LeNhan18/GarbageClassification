@@ -10,15 +10,15 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'  # Folder chứa plastic/, paper/, metal/... bên trong
 img_size = (150, 150)
-batch_size = 32
+batch_size = 64  # Tăng batch size
 epochs = 30
 input_shape = (150, 150, 3)
 
-# --- Tiền xử lý dữ liệu ---
+# --- Tiền xử lý dữ liệu với augmentation tối ưu ---
 train_datagen = ImageDataGenerator(
-    rescale=1. / 255,
+    rescale=1./255,
     validation_split=0.2,
-    rotation_range=30,
+    rotation_range=20,
     width_shift_range=0.2,
     height_shift_range=0.2,
     shear_range=0.2,
@@ -28,9 +28,8 @@ train_datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
-# Validation chỉ cần rescale
 val_datagen = ImageDataGenerator(
-    rescale=1. / 255,
+    rescale=1./255,
     validation_split=0.2
 )
 
@@ -62,64 +61,36 @@ os.makedirs(models_dir, exist_ok=True)
 logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
-# --- Callbacks ---
-model_checkpoint = ModelCheckpoint(
-    os.path.join(models_dir, 'model2_best.keras'),
-    monitor='val_accuracy',
-    save_best_only=True,
-    mode='max',
-    verbose=1,
-)
-
-early_stopping = EarlyStopping(
-    monitor='val_loss',
-    patience=8,
-    restore_best_weights=True,
-    verbose=1
-)
-
-reduce_lr = ReduceLROnPlateau(
-    monitor='val_loss',
-    factor=0.5,
-    patience=4,
-    min_lr=1e-6,
-    verbose=1
-)
-
-csv_logger = CSVLogger(os.path.join(logs_dir, 'training_log.csv'))
-
-callbacks = [model_checkpoint, early_stopping, reduce_lr, csv_logger]
-
-# --- Xây dựng mô hình CNN nâng cao ---
+# --- Xây dựng mô hình CNN nâng cao với kiến trúc tối ưu ---
 model = models.Sequential([
     # Block 1
-    layers.Conv2D(64, (3, 3), padding='same', activation='relu', input_shape=input_shape),
+    layers.Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape),
+    layers.BatchNormalization(),
+    layers.Conv2D(32, (3, 3), padding='same', activation='relu'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D(2, 2),
+    layers.Dropout(0.25),
+
+    # Block 2
+    layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
 
-    # Block 2
-    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
-    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-
     # Block 3
-    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
+    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
-    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
+    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
 
     # Block 4
-    layers.Conv2D(512, (3, 3), padding='same', activation='relu'),
+    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
-    layers.Conv2D(512, (3, 3), padding='same', activation='relu'),
+    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
@@ -129,13 +100,10 @@ model = models.Sequential([
     layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
     layers.BatchNormalization(),
     layers.Dropout(0.5),
-    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
-    layers.BatchNormalization(),
-    layers.Dropout(0.5),
-    layers.Dense(num_classes, activation='softmax')  # Multi-class classification
+    layers.Dense(num_classes, activation='softmax')
 ])
 
-# --- Biên dịch mô hình ---
+# --- Biên dịch mô hình với optimizer tối ưu ---
 optimizer = optimizers.Adam(learning_rate=0.001)
 model.compile(
     optimizer=optimizer,
@@ -145,6 +113,32 @@ model.compile(
 
 # In tóm tắt mô hình
 model.summary()
+
+# --- Callbacks tối ưu ---
+model_checkpoint = ModelCheckpoint(
+    os.path.join(models_dir, 'model2_best.keras'),
+    monitor='val_accuracy',
+    save_best_only=True,
+    mode='max',
+    verbose=1
+)
+
+early_stopping = EarlyStopping(
+    monitor='val_loss',
+    patience=5,
+    restore_best_weights=True,
+    verbose=1
+)
+
+reduce_lr = ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.2,
+    patience=3,
+    min_lr=1e-6,
+    verbose=1
+)
+
+callbacks = [model_checkpoint, early_stopping, reduce_lr]
 
 # --- Huấn luyện ---
 print("Bắt đầu huấn luyện mô hình CNN...")
@@ -157,9 +151,8 @@ history = model.fit(
 )
 
 # --- Lưu mô hình cuối cùng ---
-final_model_path = os.path.join(models_dir, 'model2_multiclass_recyclable.h5')
-model.save(final_model_path)
-print(f"✅ Đã lưu mô hình CNN thành công tại: {final_model_path}")
+model.save(os.path.join(models_dir, 'model2_multiclass_recyclable.keras'))
+print("Đã lưu mô hình CNN thành công!")
 
 # --- Đánh giá mô hình ---
 evaluation = model.evaluate(val_generator)
