@@ -6,6 +6,9 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'  # Folder chứa plastic/, paper/, metal/... bên trong
@@ -155,10 +158,75 @@ model.save(os.path.join(models_dir, 'model2_multiclass_recyclable.keras'))
 print("Đã lưu mô hình CNN thành công!")
 
 # --- Đánh giá mô hình ---
-evaluation = model.evaluate(val_generator)
-print("Đánh giá mô hình trên tập validation:")
-for i, metric in enumerate(model.metrics_names):
-    print(f"{metric}: {evaluation[i]}")
+print("\nĐánh giá chi tiết mô hình:")
+print("1. Đánh giá trên tập validation:")
+val_loss, val_accuracy, val_auc, val_precision, val_recall = model.evaluate(val_generator)
+print(f"- Loss: {val_loss:.4f}")
+print(f"- Accuracy: {val_accuracy:.4f}")
+print(f"- AUC: {val_auc:.4f}")
+print(f"- Precision: {val_precision:.4f}")
+print(f"- Recall: {val_recall:.4f}")
+
+# Vẽ biểu đồ
+plt.figure(figsize=(12, 4))
+
+# Biểu đồ accuracy
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Biểu đồ loss
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.tight_layout()
+plt.savefig(os.path.join(logs_dir, 'model2_training_history.png'))
+plt.close()
+
+# Lưu kết quả đánh giá
+with open(os.path.join(logs_dir, 'model2_evaluation.txt'), 'w') as f:
+    f.write(f"Validation Loss: {val_loss:.4f}\n")
+    f.write(f"Validation Accuracy: {val_accuracy:.4f}\n")
+    f.write(f"Validation AUC: {val_auc:.4f}\n")
+    f.write(f"Validation Precision: {val_precision:.4f}\n")
+    f.write(f"Validation Recall: {val_recall:.4f}\n")
+
+print("\nĐã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
+
+# In ma trận nhầm lẫn
+# Lấy dự đoán
+y_pred = model.predict(val_generator)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = val_generator.classes
+
+# Tính ma trận nhầm lẫn
+cm = confusion_matrix(y_true, y_pred_classes)
+
+# Vẽ ma trận nhầm lẫn
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.ylabel('True Label')
+plt.xlabel('Predicted Label')
+plt.savefig(os.path.join(logs_dir, 'model2_confusion_matrix.png'))
+plt.close()
+
+# In báo cáo phân loại
+print("\nBáo cáo phân loại:")
+print(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
+
+# Lưu báo cáo phân loại
+with open(os.path.join(logs_dir, 'model2_classification_report.txt'), 'w') as f:
+    f.write(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
 
 # --- Lưu thông tin về lớp ---
 import json
