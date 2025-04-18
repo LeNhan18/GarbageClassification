@@ -153,10 +153,7 @@ history = model.fit(
     validation_data=val_generator,
     epochs=epochs,
     callbacks=callbacks,
-    verbose=1,
-    workers=4,  # Tăng số worker
-    use_multiprocessing=True,  # Sử dụng multiprocessing
-    max_queue_size=10  # Tăng kích thước queue
+    verbose=1
 )
 
 # --- Lưu mô hình cuối cùng ---
