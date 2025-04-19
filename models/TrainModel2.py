@@ -9,23 +9,34 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
+import tensorflow as tf
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'  # Folder chứa plastic/, paper/, metal/... bên trong
-img_size = (150, 150)
-batch_size = 64  # Tăng batch size
+img_size = (128, 128)  # Giảm kích thước ảnh
+batch_size = 128  # Tăng batch size
 epochs = 30
-input_shape = (150, 150, 3)
+input_shape = (128, 128, 3)
+
+# Cấu hình GPU
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        print("✅ Đã cấu hình GPU thành công")
+    except RuntimeError as e:
+        print(f"❌ Lỗi cấu hình GPU: {e}")
 
 # --- Tiền xử lý dữ liệu với augmentation tối ưu ---
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=20,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
+    rotation_range=15,  # Giảm góc xoay
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
     horizontal_flip=True,
     brightness_range=[0.8, 1.2],
     fill_mode='nearest'
@@ -69,14 +80,10 @@ model = models.Sequential([
     # Block 1
     layers.Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape),
     layers.BatchNormalization(),
-    layers.Conv2D(32, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
 
     # Block 2
-    layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
     layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
@@ -85,14 +92,10 @@ model = models.Sequential([
     # Block 3
     layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
-    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
 
     # Block 4
-    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
     layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
@@ -100,7 +103,7 @@ model = models.Sequential([
 
     # Fully connected layers
     layers.Flatten(),
-    layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
+    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
     layers.BatchNormalization(),
     layers.Dropout(0.5),
     layers.Dense(num_classes, activation='softmax')
@@ -128,7 +131,7 @@ model_checkpoint = ModelCheckpoint(
 
 early_stopping = EarlyStopping(
     monitor='val_loss',
-    patience=5,
+    patience=3,  # Giảm patience
     restore_best_weights=True,
     verbose=1
 )
@@ -136,14 +139,14 @@ early_stopping = EarlyStopping(
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.2,
-    patience=3,
+    patience=2,  # Giảm patience
     min_lr=1e-6,
     verbose=1
 )
 
 callbacks = [model_checkpoint, early_stopping, reduce_lr]
 
-# --- Huấn luyện ---
+# --- Huấn luyện với tối ưu hóa ---
 print("Bắt đầu huấn luyện mô hình CNN...")
 history = model.fit(
     train_generator,
