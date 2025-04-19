@@ -5,6 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,10 +26,22 @@ void main() async {
 }
 
 Future<void> _requestCameraPermission() async {
-  // Kiểm tra và yêu cầu quyền camera
-  PermissionStatus status = await Permission.camera.request();
-  if (status != PermissionStatus.granted) {
-    print("Camera permission denied");
+  try {
+    PermissionStatus status = await Permission.camera.request();
+    if (status.isDenied) {
+      print("Camera permission denied");
+      status = await Permission.camera.request();
+      if (status.isDenied) {
+        print("Camera permission denied again");
+        return;
+      }
+    }
+    if (status.isPermanentlyDenied) {
+      print("Camera permission permanently denied");
+      await openAppSettings();
+    }
+  } catch (e) {
+    print("Error requesting camera permission: $e");
   }
 }
 
@@ -66,25 +81,131 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
   bool _isFrontCamera = false;
   bool _isGridVisible = false;
   List<CameraDescription> cameras = [];
+  bool _isInitialized = false;
+  bool _isLoading = false;
+  String? _predictionResult;
+  Timer? _analysisTimer;
+  bool _isAnalyzing = false;
+  List<Rect> _detectionBoxes = [];
+  List<String> _detectionLabels = [];
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    _initializeCamera();
   }
 
-  Future<void> _initCamera() async {
-    cameras = await availableCameras();
-    _controller = CameraController(widget.camera, ResolutionPreset.high);
-    // Khởi tạo controller và _initializeControllerFuture tại đây
-    await _controller.initialize(); // Đảm bảo rằng controller đã được khởi tạo trước khi sử dụng
-    setState(() {
-      _initializeControllerFuture = Future.value(); // Đảm bảo _initializeControllerFuture đã được khởi tạo
+  Future<void> _initializeCamera() async {
+    try {
+      _controller = CameraController(widget.camera, ResolutionPreset.high);
+      _initializeControllerFuture = _controller.initialize();
+      await _initializeControllerFuture;
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+      await _loadCameras();
+      _startAnalysis();
+    } catch (e) {
+      print("Error initializing camera: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi khởi tạo camera: $e',
+              style: GoogleFonts.roboto(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _startAnalysis() {
+    _analysisTimer?.cancel();
+    _analysisTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (!_isAnalyzing && _isInitialized) {
+        _analyzeFrame();
+      }
     });
+  }
+
+  Future<void> _analyzeFrame() async {
+    if (!_isInitialized || !_controller.value.isInitialized) return;
+
+    setState(() {
+      _isAnalyzing = true;
+    });
+
+    try {
+      final XFile file = await _controller.takePicture();
+      final directory = await getTemporaryDirectory();
+      final String filePath = '${directory.path}/frame_${DateTime.now()}.png';
+      await File(filePath).writeAsBytes(await file.readAsBytes());
+
+      final result = await _sendImageForPrediction(filePath);
+      
+      // Cập nhật các ô nhận diện
+      if (result != null && result['boxes'] != null) {
+        setState(() {
+          _detectionBoxes = (result['boxes'] as List).map((box) {
+            return Rect.fromLTWH(
+              box['x'] * _controller.value.previewSize!.width,
+              box['y'] * _controller.value.previewSize!.height,
+              box['width'] * _controller.value.previewSize!.width,
+              box['height'] * _controller.value.previewSize!.height,
+            );
+          }).toList();
+          _detectionLabels = (result['labels'] as List).cast<String>();
+        });
+      }
+      
+      // Xóa file tạm sau khi phân tích
+      await File(filePath).delete();
+    } catch (e) {
+      print("Error analyzing frame: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+        });
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _sendImageForPrediction(String imagePath) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('YOUR_API_ENDPOINT'),
+      );
+
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imagePath),
+      );
+
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      final result = json.decode(responseData);
+
+      if (mounted) {
+        setState(() {
+          _predictionResult = result['prediction'];
+        });
+      }
+
+      return result;
+    } catch (e) {
+      print("Error sending image: $e");
+      return null;
+    }
   }
 
   @override
   void dispose() {
+    _analysisTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -105,40 +226,11 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
 
     await _controller.dispose();
     _controller = CameraController(newCamera, ResolutionPreset.high);
-    await _controller.initialize(); // Khởi tạo lại controller sau khi chuyển camera
+    await _controller.initialize();
     setState(() {
       _isFrontCamera = !_isFrontCamera;
     });
-  }
-
-  Future<String> _takePicture() async {
-    try {
-      await _initializeControllerFuture;
-      final XFile file = await _controller.takePicture();
-      final directory = await getTemporaryDirectory();
-      final String filePath = '${directory.path}/photo_${DateTime.now()}.png';
-      await File(filePath).writeAsBytes(await file.readAsBytes());
-
-      // Save to gallery
-      final result = await ImageGallerySaver.saveFile(filePath);
-      if (result['isSuccess']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Ảnh đã được lưu vào thư viện',
-              style: GoogleFonts.roboto(),
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-
-      return filePath;
-    } catch (e) {
-      print(e);
-      return '';
-    }
+    _startAnalysis();
   }
 
   @override
@@ -158,7 +250,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
           FutureBuilder<void>(
             future: _initializeControllerFuture,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -174,6 +266,49 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                                 size: Size.infinite,
                                 painter: GridPainter(),
                               ),
+                            // Thêm các ô nhận diện
+                            ..._detectionBoxes.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final box = entry.value;
+                              return Positioned(
+                                left: box.left,
+                                top: box.top,
+                                width: box.width,
+                                height: box.height,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.green,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Positioned(
+                                        top: -20,
+                                        left: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          color: Colors.green.withOpacity(0.8),
+                                          child: Text(
+                                            _detectionLabels.length > index
+                                                ? _detectionLabels[index]
+                                                : '',
+                                            style: GoogleFonts.roboto(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                             Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
@@ -193,16 +328,53 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                     ),
                   ),
                 );
-              } else {
+              } else if (snapshot.hasError) {
                 return Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 3,
+                  child: Text(
+                    'Lỗi: ${snapshot.error}',
+                    style: GoogleFonts.roboto(color: Colors.white),
                   ),
                 );
               }
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              );
             },
           ),
+          if (_isAnalyzing)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          if (_predictionResult != null)
+            Positioned(
+              top: 100,
+              left: 0,
+              right: 0,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Kết quả: $_predictionResult',
+                  style: GoogleFonts.roboto(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -238,12 +410,12 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                     max: 5.0,
                     activeColor: Colors.white,
                     inactiveColor: Colors.white30,
-                    onChanged: (value) {
-                      setState(() {
-                        _zoomLevel = value;
-                        _controller.setZoomLevel(value);
-                      });
-                    },
+                    onChanged: _isInitialized
+                        ? (value) async {
+                            setState(() => _zoomLevel = value);
+                            await _controller.setZoomLevel(value);
+                          }
+                        : null,
                   ),
                 ],
               ),
@@ -268,14 +440,14 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                       color: Colors.white,
                       size: 28,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isFlashOn = !_isFlashOn;
-                        _controller.setFlashMode(
-                          _isFlashOn ? FlashMode.torch : FlashMode.off,
-                        );
-                      });
-                    },
+                    onPressed: _isInitialized
+                        ? () async {
+                            setState(() => _isFlashOn = !_isFlashOn);
+                            await _controller.setFlashMode(
+                              _isFlashOn ? FlashMode.torch : FlashMode.off,
+                            );
+                          }
+                        : null,
                   ),
                   const SizedBox(width: 20),
                   Container(
@@ -293,7 +465,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                     child: IconButton(
                       iconSize: 35,
                       icon: const Icon(Icons.camera, color: Colors.black),
-                      onPressed: _takePicture,
+                      onPressed: _isInitialized ? _switchCamera : null,
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -303,7 +475,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> {
                       color: Colors.white,
                       size: 28,
                     ),
-                    onPressed: _switchCamera,
+                    onPressed: _isInitialized ? _switchCamera : null,
                   ),
                 ],
               ),
