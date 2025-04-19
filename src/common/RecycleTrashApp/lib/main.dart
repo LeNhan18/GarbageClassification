@@ -231,6 +231,47 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
     }
   }
 
+  Future<void> _takePicture() async {
+    if (!_isInitialized || _controller == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Camera chưa sẵn sàng'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile file = await _controller!.takePicture();
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Đã chụp ảnh: ${file.path}',
+            style: GoogleFonts.roboto(),
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print("Error taking picture: $e");
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lỗi chụp ảnh: $e',
+            style: GoogleFonts.roboto(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -376,6 +417,25 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
                               );
                             }
                           : null,
+                    ),
+                    const SizedBox(width: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.3),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        iconSize: 35,
+                        icon: const Icon(Icons.camera, color: Colors.black),
+                        onPressed: _isInitialized ? _takePicture : null,
+                      ),
                     ),
                     const SizedBox(width: 20),
                     IconButton(
