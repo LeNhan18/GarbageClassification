@@ -27,22 +27,21 @@ if gpus:
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data'
 img_size = (224, 224)  # Kích thước phù hợp với EfficientNet
-batch_size = 32
-epochs = 50
+batch_size = 64  # Tăng batch size vì có nhiều dữ liệu
+epochs = 30  # Giảm epochs vì có nhiều dữ liệu
 input_shape = (224, 224, 3)
 
-# --- Tiền xử lý dữ liệu với augmentation mạnh ---
+# --- Tiền xử lý dữ liệu với augmentation vừa phải ---
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=30,
+    rotation_range=20,
     width_shift_range=0.2,
     height_shift_range=0.2,
     shear_range=0.2,
     zoom_range=0.2,
     horizontal_flip=True,
-    vertical_flip=True,
-    brightness_range=[0.7, 1.3],
+    brightness_range=[0.8, 1.2],
     fill_mode='nearest'
 )
 
@@ -90,14 +89,14 @@ for layer in base_model.layers:
 model = models.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
-    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+    layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
     layers.BatchNormalization(),
-    layers.Dropout(0.5),
+    layers.Dropout(0.3),
     layers.Dense(1, activation='sigmoid')
 ])
 
 # --- Biên dịch mô hình ---
-optimizer = optimizers.Adam(learning_rate=0.0001)
+optimizer = optimizers.Adam(learning_rate=0.001)
 model.compile(
     optimizer=optimizer,
     loss='binary_crossentropy',
