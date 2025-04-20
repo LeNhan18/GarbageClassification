@@ -22,7 +22,7 @@ with open('class_mapping.json', 'w') as f:
 try:
     with open('class_mapping.json', 'r') as f:
         class_mapping = json.load(f)
-    print("✅ Đã load ánh xạ lớp.")
+    print("Đã load ánh xạ lớp.")
 except:
     # Nếu không có, bạn tự định nghĩa:
     class_mapping = {0: 'Non-Recyclable', 1: 'Recyclable'}  # hoặc ngược lại nếu model bạn học theo chiều ngược
@@ -39,19 +39,25 @@ def preprocess_image(img, target_size=(150, 150)):
 def test_model():
     print("=== BẮT ĐẦU KIỂM TRA MODEL ===")
     
-    # --- Load model ---
+    # --- Load model và mapping ---
     model_path = 'model1_binary_recyclable.keras'
+    mapping_path = 'class_mapping.json'
+    
     try:
         model = load_model(model_path)
-        print("✅ Đã tải mô hình thành công")
+        print("Đã tải mô hình thành công")
+        
+        with open(mapping_path, 'r') as f:
+            class_mapping = json.load(f)
+        print("Đã tải mapping thành công")
     except Exception as e:
-        print(f"❌ Lỗi khi tải mô hình: {e}")
+        print(f"Lỗi khi tải mô hình hoặc mapping: {e}")
         return
 
     # --- Mở camera ---
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ Không thể mở camera")
+        print(" Không thể mở camera")
         return
 
     print("🚀 Camera đã sẵn sàng. Bấm 'q' để thoát.")
@@ -59,7 +65,7 @@ def test_model():
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("❌ Không thể đọc frame từ camera")
+            print("Không thể đọc frame từ camera")
             break
 
         # Vẽ khung giữa ảnh
@@ -74,7 +80,7 @@ def test_model():
         roi = frame[y1:y2, x1:x2]
         
         # Tiền xử lý ảnh
-        img = cv2.resize(roi, (150, 150))
+        img = cv2.resize(roi, (128, 128))
         img = img / 255.0
         img = np.expand_dims(img, axis=0)
         
@@ -97,7 +103,7 @@ def test_model():
 
     cap.release()
     cv2.destroyAllWindows()
-    print("✅ Đã đóng camera và kết thúc chương trình")
+    print("Đã đóng camera và kết thúc chương trình")
 
 def test_model1_images():
     print("\n=== BẮT ĐẦU KIỂM TRA MODEL 1 VỚI ẢNH ===")
@@ -106,9 +112,9 @@ def test_model1_images():
     model_path = os.path.join('model', 'model1_binary_recyclable.keras')
     try:
         model = load_model(model_path)
-        print("✅ Đã tải mô hình thành công")
+        print("Đã tải mô hình thành công")
     except Exception as e:
-        print(f"❌ Lỗi khi tải mô hình: {e}")
+        print(f"Lỗi khi tải mô hình: {e}")
         return
     
     # Thư mục test
