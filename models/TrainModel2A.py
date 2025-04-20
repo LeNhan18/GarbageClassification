@@ -1,10 +1,11 @@
-# train_model2.py
-# Huấn luyện mô hình CNN nâng cao để phân loại các loại rác tái chế (multi-class)
+# train_model2a.py
+# Huấn luyện mô hình phân loại chi tiết các loại rác tái chế
 
 import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
@@ -16,34 +17,32 @@ import json
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
     try:
-        # Cho phép tăng bộ nhớ GPU khi cần
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
-        
-        # Thiết lập mixed precision training
         tf.keras.mixed_precision.set_global_policy('mixed_float16')
-        
-        print("Đã cấu hình GPU thành công")
+        print("✅ Đã cấu hình GPU thành công")
     except RuntimeError as e:
-        print(f"Lỗi cấu hình GPU: {e}")
+        print(f"❌ Lỗi cấu hình GPU: {e}")
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
-img_size = (128, 128)
-batch_size = 128  # Tăng batch size để tăng tốc độ
-epochs = 30
-input_shape = (128, 128, 3)
+img_size = (224, 224)
+batch_size = 32
+epochs = 50
+input_shape = (224, 224, 3)
 
-# --- Tiền xử lý dữ liệu với augmentation tối ưu ---
+# --- Tiền xử lý dữ liệu với augmentation mạnh ---
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=15,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.1,
-    zoom_range=0.1,
+    rotation_range=45,
+    width_shift_range=0.3,
+    height_shift_range=0.3,
+    shear_range=0.3,
+    zoom_range=0.3,
     horizontal_flip=True,
+    vertical_flip=True,
+    brightness_range=[0.6, 1.4],
     fill_mode='nearest'
 )
 
@@ -52,7 +51,7 @@ val_datagen = ImageDataGenerator(
     validation_split=0.2
 )
 
-# Sử dụng prefetch để tăng tốc độ đọc dữ liệu
+# Tạo data generators
 train_generator = train_datagen.flow_from_directory(
     data_dir,
     target_size=img_size,
@@ -75,42 +74,37 @@ num_classes = train_generator.num_classes
 print(f"Số lượng lớp phân loại: {num_classes}")
 print(f"Tên các lớp: {list(train_generator.class_indices.keys())}")
 
-# --- Tạo thư mục lưu mô hình ---
+# --- Tạo thư mục lưu mô hình và logs ---
 models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model')
 os.makedirs(models_dir, exist_ok=True)
 logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
-# --- Xây dựng mô hình CNN tối ưu ---
+# --- Xây dựng mô hình với Transfer Learning ---
+base_model = EfficientNetB0(
+    weights='imagenet',
+    include_top=False,
+    input_shape=input_shape
+)
+
+# Đóng băng các layer của base model
+for layer in base_model.layers:
+    layer.trainable = False
+
 model = models.Sequential([
-    # Block 1
-    layers.Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape),
+    base_model,
+    layers.GlobalAveragePooling2D(),
+    layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
     layers.BatchNormalization(),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-
-    # Block 2
-    layers.Conv2D(64, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-
-    # Block 3
-    layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-
-    # Fully connected layers
-    layers.Flatten(),
-    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.001)),
+    layers.Dropout(0.5),
+    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
     layers.BatchNormalization(),
     layers.Dropout(0.5),
     layers.Dense(num_classes, activation='softmax')
 ])
 
-# --- Biên dịch mô hình với optimizer tối ưu ---
-optimizer = optimizers.Adam(learning_rate=0.001)
+# --- Biên dịch mô hình ---
+optimizer = optimizers.Adam(learning_rate=0.0001)
 model.compile(
     optimizer=optimizer,
     loss='categorical_crossentropy',
@@ -120,9 +114,9 @@ model.compile(
 # In tóm tắt mô hình
 model.summary()
 
-# --- Callbacks tối ưu ---
+# --- Callbacks ---
 model_checkpoint = ModelCheckpoint(
-    os.path.join(models_dir, 'model2_best.keras'),
+    os.path.join(models_dir, 'model2a_best.keras'),
     monitor='val_accuracy',
     save_best_only=True,
     mode='max',
@@ -131,7 +125,7 @@ model_checkpoint = ModelCheckpoint(
 
 early_stopping = EarlyStopping(
     monitor='val_loss',
-    patience=3,
+    patience=5,
     restore_best_weights=True,
     verbose=1
 )
@@ -139,17 +133,17 @@ early_stopping = EarlyStopping(
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.2,
-    patience=2,
+    patience=3,
     min_lr=1e-6,
     verbose=1
 )
 
-csv_logger = CSVLogger(os.path.join(logs_dir, 'model2_training.csv'))
+csv_logger = CSVLogger(os.path.join(logs_dir, 'model2a_training.csv'))
 
 callbacks = [model_checkpoint, early_stopping, reduce_lr, csv_logger]
 
-# --- Huấn luyện với tối ưu hóa ---
-print("Bắt đầu huấn luyện mô hình CNN...")
+# --- Huấn luyện mô hình ---
+print("Bắt đầu huấn luyện mô hình...")
 history = model.fit(
     train_generator,
     validation_data=val_generator,
@@ -159,8 +153,8 @@ history = model.fit(
 )
 
 # --- Lưu mô hình cuối cùng ---
-model.save(os.path.join(models_dir, 'model2_multiclass_recyclable.keras'))
-print("Đã lưu mô hình CNN thành công!")
+model.save(os.path.join(models_dir, 'model2a_multiclass_recyclable.keras'))
+print("✅ Đã lưu mô hình thành công!")
 
 # --- Đánh giá mô hình ---
 print("\nĐánh giá chi tiết mô hình:")
@@ -194,18 +188,18 @@ plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig(os.path.join(logs_dir, 'model2_training_history.png'))
+plt.savefig(os.path.join(logs_dir, 'model2a_training_history.png'))
 plt.close()
 
 # Lưu kết quả đánh giá
-with open(os.path.join(logs_dir, 'model2_evaluation.txt'), 'w') as f:
+with open(os.path.join(logs_dir, 'model2a_evaluation.txt'), 'w') as f:
     f.write(f"Validation Loss: {val_loss:.4f}\n")
     f.write(f"Validation Accuracy: {val_accuracy:.4f}\n")
     f.write(f"Validation AUC: {val_auc:.4f}\n")
     f.write(f"Validation Precision: {val_precision:.4f}\n")
     f.write(f"Validation Recall: {val_recall:.4f}\n")
 
-print("\nĐã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
+print("\n✅ Đã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
 
 # In ma trận nhầm lẫn
 y_pred = model.predict(val_generator)
@@ -219,7 +213,7 @@ sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
 plt.title('Confusion Matrix')
 plt.ylabel('True Label')
 plt.xlabel('Predicted Label')
-plt.savefig(os.path.join(logs_dir, 'model2_confusion_matrix.png'))
+plt.savefig(os.path.join(logs_dir, 'model2a_confusion_matrix.png'))
 plt.close()
 
 # In báo cáo phân loại
@@ -227,14 +221,14 @@ print("\nBáo cáo phân loại:")
 print(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
 
 # Lưu báo cáo phân loại
-with open(os.path.join(logs_dir, 'model2_classification_report.txt'), 'w') as f:
+with open(os.path.join(logs_dir, 'model2a_classification_report.txt'), 'w') as f:
     f.write(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
 
 # --- Lưu thông tin về lớp ---
 class_indices = train_generator.class_indices
 class_mapping = {v: k for k, v in class_indices.items()}
-with open(os.path.join(models_dir, 'class_mapping.json'), 'w') as f:
+with open(os.path.join(models_dir, 'class_mapping_2a.json'), 'w') as f:
     json.dump(class_mapping, f)
 
 print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
-print("✅ Hoàn thành quá trình huấn luyện.")
+print("✅ Hoàn thành quá trình huấn luyện.") 
