@@ -10,35 +10,40 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 import tensorflow as tf
+import json
 
-# --- Cấu hình ---
-data_dir = 'Z:\\GarbageClassification\\data\\recyclable'  # Folder chứa plastic/, paper/, metal/... bên trong
-img_size = (128, 128)  # Giảm kích thước ảnh
-batch_size = 128  # Tăng batch size
-epochs = 30
-input_shape = (128, 128, 3)
-
-# Cấu hình GPU
+# --- Cấu hình GPU để tăng tốc độ ---
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
     try:
+        # Cho phép tăng bộ nhớ GPU khi cần
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
+        
+        # Thiết lập mixed precision training
+        tf.keras.mixed_precision.set_global_policy('mixed_float16')
+        
         print("✅ Đã cấu hình GPU thành công")
     except RuntimeError as e:
         print(f"❌ Lỗi cấu hình GPU: {e}")
+
+# --- Cấu hình ---
+data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
+img_size = (128, 128)
+batch_size = 128  # Tăng batch size để tăng tốc độ
+epochs = 30
+input_shape = (128, 128, 3)
 
 # --- Tiền xử lý dữ liệu với augmentation tối ưu ---
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=15,  # Giảm góc xoay
+    rotation_range=15,
     width_shift_range=0.1,
     height_shift_range=0.1,
     shear_range=0.1,
     zoom_range=0.1,
     horizontal_flip=True,
-    brightness_range=[0.8, 1.2],
     fill_mode='nearest'
 )
 
@@ -47,6 +52,7 @@ val_datagen = ImageDataGenerator(
     validation_split=0.2
 )
 
+# Sử dụng prefetch để tăng tốc độ đọc dữ liệu
 train_generator = train_datagen.flow_from_directory(
     data_dir,
     target_size=img_size,
@@ -75,7 +81,7 @@ os.makedirs(models_dir, exist_ok=True)
 logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
-# --- Xây dựng mô hình CNN nâng cao với kiến trúc tối ưu ---
+# --- Xây dựng mô hình CNN tối ưu ---
 model = models.Sequential([
     # Block 1
     layers.Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape),
@@ -91,12 +97,6 @@ model = models.Sequential([
 
     # Block 3
     layers.Conv2D(128, (3, 3), padding='same', activation='relu'),
-    layers.BatchNormalization(),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-
-    # Block 4
-    layers.Conv2D(256, (3, 3), padding='same', activation='relu'),
     layers.BatchNormalization(),
     layers.MaxPooling2D(2, 2),
     layers.Dropout(0.25),
@@ -131,7 +131,7 @@ model_checkpoint = ModelCheckpoint(
 
 early_stopping = EarlyStopping(
     monitor='val_loss',
-    patience=3,  # Giảm patience
+    patience=3,
     restore_best_weights=True,
     verbose=1
 )
@@ -139,12 +139,14 @@ early_stopping = EarlyStopping(
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.2,
-    patience=2,  # Giảm patience
+    patience=2,
     min_lr=1e-6,
     verbose=1
 )
 
-callbacks = [model_checkpoint, early_stopping, reduce_lr]
+csv_logger = CSVLogger(os.path.join(logs_dir, 'model2_training.csv'))
+
+callbacks = [model_checkpoint, early_stopping, reduce_lr, csv_logger]
 
 # --- Huấn luyện với tối ưu hóa ---
 print("Bắt đầu huấn luyện mô hình CNN...")
@@ -206,15 +208,12 @@ with open(os.path.join(logs_dir, 'model2_evaluation.txt'), 'w') as f:
 print("\nĐã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
 
 # In ma trận nhầm lẫn
-# Lấy dự đoán
 y_pred = model.predict(val_generator)
 y_pred_classes = np.argmax(y_pred, axis=1)
 y_true = val_generator.classes
 
-# Tính ma trận nhầm lẫn
 cm = confusion_matrix(y_true, y_pred_classes)
 
-# Vẽ ma trận nhầm lẫn
 plt.figure(figsize=(10, 8))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
 plt.title('Confusion Matrix')
@@ -232,13 +231,10 @@ with open(os.path.join(logs_dir, 'model2_classification_report.txt'), 'w') as f:
     f.write(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
 
 # --- Lưu thông tin về lớp ---
-import json
-
 class_indices = train_generator.class_indices
-# Đảo ngược dictionary để lưu mapping từ index sang tên lớp
 class_mapping = {v: k for k, v in class_indices.items()}
 with open(os.path.join(models_dir, 'class_mapping.json'), 'w') as f:
     json.dump(class_mapping, f)
 
-print(" Đã lưu thông tin ánh xạ lớp thành công!")
-print("Hoàn thành quá trình huấn luyện.")
+print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
+print("✅ Hoàn thành quá trình huấn luyện.")
