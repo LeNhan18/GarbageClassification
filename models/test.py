@@ -36,11 +36,11 @@ def preprocess_image(img, target_size=(150, 150)):
     return img_array
 
 
-def test_model1_camera():
-    print("=== BẮT ĐẦU KIỂM TRA MODEL 1 VỚI CAMERA ===")
+def test_model():
+    print("=== BẮT ĐẦU KIỂM TRA MODEL ===")
     
     # --- Load model ---
-    model_path = os.path.join('model', 'model1_binary_recyclable.keras')
+    model_path = 'model1_binary_recyclable.keras'
     try:
         model = load_model(model_path)
         print("✅ Đã tải mô hình thành công")
@@ -55,10 +55,6 @@ def test_model1_camera():
         return
 
     print("🚀 Camera đã sẵn sàng. Bấm 'q' để thoát.")
-    
-    # Cấu hình hiển thị
-    window_name = "Phân Loại Rác Thải"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     
     while True:
         ret, frame = cap.read()
@@ -77,29 +73,28 @@ def test_model1_camera():
         # Lấy ảnh trong khung
         roi = frame[y1:y2, x1:x2]
         
+        # Tiền xử lý ảnh
+        img = cv2.resize(roi, (150, 150))
+        img = img / 255.0
+        img = np.expand_dims(img, axis=0)
+        
         # Dự đoán
-        result = predict_single_image(model, roi)
+        prediction = model.predict(img)[0]
+        class_index = np.argmax(prediction)
+        confidence = float(prediction[class_index])
+        label = "Tái chế" if class_index == 1 else "Không tái chế"
         
         # Vẽ khung và kết quả
-        color = (0, 255, 0) if result and result['predicted_class'] == 'Tái chế' else (0, 0, 255)
+        color = (0, 255, 0) if label == "Tái chế" else (0, 0, 255)
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+        cv2.putText(frame, f"{label} ({confidence*100:.1f}%)", 
+                   (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         
-        if result:
-            label = f"{result['predicted_class']} ({result['probability']*100:.1f}%)"
-            cv2.putText(frame, label, (x1, y1-10), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        cv2.imshow('Phân Loại Rác Thải', frame)
         
-        # Hiển thị hướng dẫn
-        cv2.putText(frame, "Bấm 'q' để thoát", (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        
-        cv2.imshow(window_name, frame)
-        
-        # Thoát khi bấm 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Giải phóng tài nguyên
     cap.release()
     cv2.destroyAllWindows()
     print("✅ Đã đóng camera và kết thúc chương trình")
@@ -149,19 +144,4 @@ def test_model1_images():
                     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    print("Chọn chế độ test:")
-    print("1. Test với camera")
-    print("2. Test với ảnh")
-    print("3. Test cả hai")
-    
-    choice = input("Nhập lựa chọn (1-3): ")
-    
-    if choice == '1':
-        test_model1_camera()
-    elif choice == '2':
-        test_model1_images()
-    elif choice == '3':
-        test_model1_camera()
-        test_model1_images()
-    else:
-        print("Lựa chọn không hợp lệ")
+    test_model()
