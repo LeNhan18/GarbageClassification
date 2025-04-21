@@ -238,3 +238,5 @@ with open(os.path.join(models_dir, 'class_mapping.json'), 'w') as f:
 
 print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
 print("✅ Hoàn thành quá trình huấn luyện.")
+
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
