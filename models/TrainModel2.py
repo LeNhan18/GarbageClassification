@@ -192,11 +192,9 @@ plt.title('Model Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
-
 plt.tight_layout()
 plt.savefig(os.path.join(logs_dir, 'model2_training_history.png'))
 plt.close()
-
 # Lưu kết quả đánh giá
 with open(os.path.join(logs_dir, 'model2_evaluation.txt'), 'w') as f:
     f.write(f"Validation Loss: {val_loss:.4f}\n")
