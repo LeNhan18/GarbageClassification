@@ -1,5 +1,5 @@
-# train_model2a.py
-# Huấn luyện mô hình phân loại chi tiết các loại rác tái chế
+# train_model2A.py
+# Huấn luyện mô hình phân loại rác tái chế
 
 import os
 import numpy as np
@@ -8,41 +8,43 @@ from tensorflow.keras import layers, models, regularizers, optimizers
 from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, classification_report
-import seaborn as sns
 import tensorflow as tf
-import json
 
 # --- Cấu hình GPU để tăng tốc độ ---
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    try:
+try:
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
+        tf.config.experimental.set_virtual_device_configuration(
+            gpus[0],
+            [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]
+        )
         print("✅ Đã cấu hình GPU thành công")
-    except RuntimeError as e:
-        print(f"❌ Lỗi cấu hình GPU: {e}")
+    else:
+        print("❌ Không tìm thấy GPU")
+except Exception as e:
+    print(f"❌ Lỗi cấu hình GPU: {e}")
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
-img_size = (224, 224)
-batch_size = 64
-epochs = 30
+img_size = (224, 224)  # Giảm kích thước ảnh xuống
+batch_size = 32  # Tăng batch size
+epochs = 50  # Giảm epochs
 input_shape = (224, 224, 3)
 
-# --- Tiền xử lý dữ liệu với augmentation vừa phải ---
+# --- Data Augmentation vừa phải ---
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=20,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
+    rotation_range=20,  # Giảm rotation
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
     horizontal_flip=True,
-    brightness_range=[0.8, 1.2],
-    fill_mode='nearest'
+    fill_mode='nearest',
+    brightness_range=[0.8, 1.2]
 )
 
 val_datagen = ImageDataGenerator(
@@ -50,7 +52,7 @@ val_datagen = ImageDataGenerator(
     validation_split=0.2
 )
 
-# Tạo data generators
+# Tạo generators
 train_generator = train_datagen.flow_from_directory(
     data_dir,
     target_size=img_size,
@@ -69,80 +71,88 @@ val_generator = val_datagen.flow_from_directory(
     shuffle=False
 )
 
-num_classes = train_generator.num_classes
-print(f"Số lượng lớp phân loại: {num_classes}")
-print(f"Tên các lớp: {list(train_generator.class_indices.keys())}")
-
 # --- Tạo thư mục lưu mô hình và logs ---
 models_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'model')
-os.makedirs(models_dir, exist_ok=True)
 logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(models_dir, exist_ok=True)
 os.makedirs(logs_dir, exist_ok=True)
 
-# --- Xây dựng mô hình với Transfer Learning ---
-base_model = EfficientNetB0(
+# --- Xây dựng mô hình với EfficientNetB0 ---
+base_model = EfficientNetB0(  # Đổi về B0 cho nhẹ hơn
     weights='imagenet',
     include_top=False,
     input_shape=input_shape
 )
 
-# Đóng băng các layer của base model
-for layer in base_model.layers:
+# Fine-tune từ block 6 trở đi
+fine_tune_at = 156  # Block 6 của EfficientNetB0
+for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
 model = models.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
-    layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
     layers.BatchNormalization(),
-    layers.Dropout(0.3),
-    layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
+    
+    # First Dense Block - giảm số neurons
+    layers.Dense(512, kernel_regularizer=regularizers.l2(0.001)),
     layers.BatchNormalization(),
+    layers.Activation('relu'),
     layers.Dropout(0.3),
-    layers.Dense(num_classes, activation='softmax')
+    
+    # Output Layer
+    layers.Dense(len(train_generator.class_indices), activation='softmax')
 ])
 
-# --- Biên dịch mô hình ---
-optimizer = optimizers.Adam(learning_rate=0.001)
+# --- Tối ưu quá trình huấn luyện ---
+initial_learning_rate = 1e-4  # Tăng learning rate
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(  # Đổi sang ExponentialDecay
+    initial_learning_rate,
+    decay_steps=train_generator.samples // batch_size * 5,
+    decay_rate=0.9,
+    staircase=True
+)
+
+optimizer = optimizers.Adam(
+    learning_rate=lr_schedule,
+    beta_1=0.9,
+    beta_2=0.999,
+    epsilon=1e-07
+)
+
 model.compile(
     optimizer=optimizer,
     loss='categorical_crossentropy',
-    metrics=['accuracy', 'AUC', 'Precision', 'Recall']
+    metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=2, name='top_2_accuracy')]
 )
-
-# In tóm tắt mô hình
-model.summary()
 
 # --- Callbacks ---
-model_checkpoint = ModelCheckpoint(
-    os.path.join(models_dir, 'model2a_best.keras'),
-    monitor='val_accuracy',
-    save_best_only=True,
-    mode='max',
-    verbose=1
-)
-
-early_stopping = EarlyStopping(
-    monitor='val_loss',
-    patience=5,
-    restore_best_weights=True,
-    verbose=1
-)
-
-reduce_lr = ReduceLROnPlateau(
-    monitor='val_loss',
-    factor=0.2,
-    patience=3,
-    min_lr=1e-6,
-    verbose=1
-)
-
-csv_logger = CSVLogger(os.path.join(logs_dir, 'model2a_training.csv'))
-
-callbacks = [model_checkpoint, early_stopping, reduce_lr, csv_logger]
+callbacks = [
+    ModelCheckpoint(
+        os.path.join(models_dir, 'model2A_best.keras'),
+        monitor='val_accuracy',
+        save_best_only=True,
+        mode='max',
+        verbose=1
+    ),
+    EarlyStopping(
+        monitor='val_loss',
+        patience=10,  # Giảm patience
+        restore_best_weights=True,
+        verbose=1
+    ),
+    ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.5,
+        patience=5,  # Giảm patience
+        min_lr=1e-6,
+        verbose=1
+    ),
+    CSVLogger(os.path.join(logs_dir, 'model2A_training.csv'))
+]
 
 # --- Huấn luyện mô hình ---
-print("Bắt đầu huấn luyện mô hình...")
+print("\nBắt đầu huấn luyện Model 2A (Phân loại rác tái chế)...")
 history = model.fit(
     train_generator,
     validation_data=val_generator,
@@ -151,83 +161,37 @@ history = model.fit(
     verbose=1
 )
 
-# --- Lưu mô hình cuối cùng ---
-model.save(os.path.join(models_dir, 'model2a_multiclass_recyclable.keras'))
+# --- Lưu mô hình và đánh giá ---
+model.save(os.path.join(models_dir, 'model2A_final.keras'))
 print("✅ Đã lưu mô hình thành công!")
 
-# --- Đánh giá mô hình ---
-print("\nĐánh giá chi tiết mô hình:")
-print("1. Đánh giá trên tập validation:")
-val_loss, val_accuracy, val_auc, val_precision, val_recall = model.evaluate(val_generator)
-print(f"- Loss: {val_loss:.4f}")
-print(f"- Accuracy: {val_accuracy:.4f}")
-print(f"- AUC: {val_auc:.4f}")
-print(f"- Precision: {val_precision:.4f}")
-print(f"- Recall: {val_recall:.4f}")
+# Đánh giá mô hình
+val_metrics = model.evaluate(val_generator, verbose=1)
+metrics_names = ['loss', 'accuracy', 'top_2_accuracy']
+print("\nKết quả đánh giá Model 2A:")
+for name, value in zip(metrics_names, val_metrics):
+    print(f"{name}: {value:.4f}")
 
-# Vẽ biểu đồ
+# Vẽ và lưu biểu đồ
 plt.figure(figsize=(12, 4))
-
-# Biểu đồ accuracy
 plt.subplot(1, 2, 1)
-plt.plot(history.history['accuracy'], label='Training Accuracy')
-plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-plt.title('Model Accuracy')
+plt.plot(history.history['accuracy'], label='Training')
+plt.plot(history.history['val_accuracy'], label='Validation')
+plt.title('Model 2A Accuracy')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.legend()
 
-# Biểu đồ loss
 plt.subplot(1, 2, 2)
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.title('Model Loss')
+plt.plot(history.history['loss'], label='Training')
+plt.plot(history.history['val_loss'], label='Validation')
+plt.title('Model 2A Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig(os.path.join(logs_dir, 'model2a_training_history.png'))
+plt.savefig(os.path.join(logs_dir, 'model2A_training_history.png'))
 plt.close()
 
-# Lưu kết quả đánh giá
-with open(os.path.join(logs_dir, 'model2a_evaluation.txt'), 'w') as f:
-    f.write(f"Validation Loss: {val_loss:.4f}\n")
-    f.write(f"Validation Accuracy: {val_accuracy:.4f}\n")
-    f.write(f"Validation AUC: {val_auc:.4f}\n")
-    f.write(f"Validation Precision: {val_precision:.4f}\n")
-    f.write(f"Validation Recall: {val_recall:.4f}\n")
-
-print("\n✅ Đã lưu kết quả đánh giá và biểu đồ vào thư mục logs")
-
-# In ma trận nhầm lẫn
-y_pred = model.predict(val_generator)
-y_pred_classes = np.argmax(y_pred, axis=1)
-y_true = val_generator.classes
-
-cm = confusion_matrix(y_true, y_pred_classes)
-
-plt.figure(figsize=(10, 8))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title('Confusion Matrix')
-plt.ylabel('True Label')
-plt.xlabel('Predicted Label')
-plt.savefig(os.path.join(logs_dir, 'model2a_confusion_matrix.png'))
-plt.close()
-
-# In báo cáo phân loại
-print("\nBáo cáo phân loại:")
-print(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
-
-# Lưu báo cáo phân loại
-with open(os.path.join(logs_dir, 'model2a_classification_report.txt'), 'w') as f:
-    f.write(classification_report(y_true, y_pred_classes, target_names=list(val_generator.class_indices.keys())))
-
-# --- Lưu thông tin về lớp ---
-class_indices = train_generator.class_indices
-class_mapping = {v: k for k, v in class_indices.items()}
-with open(os.path.join(models_dir, 'class_mapping_2a.json'), 'w') as f:
-    json.dump(class_mapping, f)
-
-print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
-print("✅ Hoàn thành quá trình huấn luyện.") 
+print("✅ Hoàn thành quá trình huấn luyện Model 2A.") 
