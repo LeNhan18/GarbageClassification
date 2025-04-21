@@ -23,9 +23,9 @@ if gpus:
         # Thiết lập mixed precision training
         tf.keras.mixed_precision.set_global_policy('mixed_float16')
         
-        print("✅ Đã cấu hình GPU thành công")
+        print("Đã cấu hình GPU thành công")
     except RuntimeError as e:
-        print(f"❌ Lỗi cấu hình GPU: {e}")
+        print(f"Lỗi cấu hình GPU: {e}")
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
@@ -238,3 +238,5 @@ with open(os.path.join(models_dir, 'class_mapping.json'), 'w') as f:
 
 print("✅ Đã lưu thông tin ánh xạ lớp thành công!")
 print("✅ Hoàn thành quá trình huấn luyện.")
+
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
