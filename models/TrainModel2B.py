@@ -20,9 +20,9 @@ if gpus:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         tf.keras.mixed_precision.set_global_policy('mixed_float16')
-        print("✅ Đã cấu hình GPU thành công")
+        print("Đã cấu hình GPU thành công")
     except RuntimeError as e:
-        print(f"❌ Lỗi cấu hình GPU: {e}")
+        print(f"Lỗi cấu hình GPU: {e}")
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable'
