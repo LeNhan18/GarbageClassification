@@ -7,7 +7,7 @@ import time
 def load_and_prepare_model():
     try:
         # Load model
-        model = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\models\\model1_binary_recyclable.h5')
+        model = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_best.keras')
         print("✅ Đã tải model thành công!")
         return model
     except Exception as e:
