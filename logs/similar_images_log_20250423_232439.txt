@@ -1,0 +1,6 @@
+Similar Images Log - 20250423_232439
+Total images scanned: 1044
+Similarity threshold: 10
+Similar pairs found: 0
+
+No similar images found.
