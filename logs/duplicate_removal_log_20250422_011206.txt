@@ -1,0 +1,5 @@
+Duplicate Removal Log - 20250422_011206
+Total images scanned: 5325
+Duplicates found: 1
+
+Removed: Z:\GarbageClassification\data\non_recyclable\clothes\clothes5234.jpg (Original: Z:\GarbageClassification\data\non_recyclable\clothes\clothes2051.jpg)
