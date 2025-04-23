@@ -5,9 +5,9 @@ import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
-from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications import EfficientNetB2  # Nâng cấp lên B2
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # Sửa lỗi import
 import tensorflow as tf
 
 # --- Cấu hình GPU để tăng tốc độ ---
@@ -28,27 +28,28 @@ except Exception as e:
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable'
-img_size = (224, 224)  # Giảm kích thước ảnh xuống
-batch_size = 32  # Tăng batch size
-epochs = 50  # Giảm epochs
-input_shape = (224, 224, 3)
+img_size = (240, 240)  # Tăng kích thước ảnh một chút
+batch_size = 16  # Giảm batch size để cải thiện độ chính xác
+epochs = 100  # Tăng epochs
+input_shape = (240, 240, 3)
 
-# --- Data Augmentation vừa phải ---
+# --- Data Augmentation mạnh hơn ---
 train_datagen = ImageDataGenerator(
-    rescale=1./255,
+    rescale=1. / 255,
     validation_split=0.2,
-    rotation_range=20,  # Giảm rotation
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.1,
-    zoom_range=0.1,
+    rotation_range=30,  # Tăng rotation
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.15,
+    zoom_range=0.2,
     horizontal_flip=True,
+    vertical_flip=True,  # Thêm lật dọc
     fill_mode='nearest',
-    brightness_range=[0.8, 1.2]
+    brightness_range=[0.7, 1.3]
 )
 
 val_datagen = ImageDataGenerator(
-    rescale=1./255,
+    rescale=1. / 255,
     validation_split=0.2
 )
 
@@ -77,15 +78,15 @@ logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
 os.makedirs(models_dir, exist_ok=True)
 os.makedirs(logs_dir, exist_ok=True)
 
-# --- Xây dựng mô hình với EfficientNetB0 ---
-base_model = EfficientNetB0(  # Đổi về B0 cho nhẹ hơn
+# --- Xây dựng mô hình với EfficientNetB2 ---
+base_model = EfficientNetB2(  # Nâng cấp từ B0 lên B2
     weights='imagenet',
     include_top=False,
     input_shape=input_shape
 )
 
-# Fine-tune từ block 6 trở đi
-fine_tune_at = 156  # Block 6 của EfficientNetB0
+# Fine-tune nhiều layer hơn
+fine_tune_at = 100  # Giảm để fine-tune nhiều layer hơn
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
 
@@ -93,28 +94,30 @@ model = models.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
     layers.BatchNormalization(),
-    
-    # First Dense Block - giảm số neurons
-    layers.Dense(512, kernel_regularizer=regularizers.l2(0.001)),
+
+    # First Dense Block
+    layers.Dense(1024, kernel_regularizer=regularizers.l2(0.0005)),  # Tăng neurons và giảm regularization
+    layers.BatchNormalization(),
+    layers.Activation('relu'),
+    layers.Dropout(0.4),
+
+    # Second Dense Block - thêm một lớp hidden
+    layers.Dense(512, kernel_regularizer=regularizers.l2(0.0005)),
     layers.BatchNormalization(),
     layers.Activation('relu'),
     layers.Dropout(0.3),
-    
+
     # Output Layer
     layers.Dense(len(train_generator.class_indices), activation='softmax')
 ])
 
 # --- Tối ưu quá trình huấn luyện ---
-initial_learning_rate = 1e-4  # Tăng learning rate
-lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(  # Đổi sang ExponentialDecay
-    initial_learning_rate,
-    decay_steps=train_generator.samples // batch_size * 5,
-    decay_rate=0.9,
-    staircase=True
-)
+# Sửa lỗi LearningRateSchedule bằng cách sử dụng learning rate cố định
+initial_learning_rate = 1e-4
 
+# Thay thế lr_schedule bằng giá trị cố định
 optimizer = optimizers.Adam(
-    learning_rate=lr_schedule,
+    learning_rate=initial_learning_rate,  # Sử dụng giá trị cố định thay vì schedule
     beta_1=0.9,
     beta_2=0.999,
     epsilon=1e-07
@@ -137,15 +140,15 @@ callbacks = [
     ),
     EarlyStopping(
         monitor='val_loss',
-        patience=10,  # Giảm patience
+        patience=15,  # Tăng patience
         restore_best_weights=True,
         verbose=1
     ),
-    ReduceLROnPlateau(
+    ReduceLROnPlateau(  # Sử dụng ReduceLROnPlateau thay vì schedule
         monitor='val_loss',
         factor=0.5,
-        patience=5,  # Giảm patience
-        min_lr=1e-6,
+        patience=7,
+        min_lr=1e-7,
         verbose=1
     ),
     CSVLogger(os.path.join(logs_dir, 'model2B_training.csv'))
@@ -194,4 +197,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(logs_dir, 'model2B_training_history.png'))
 plt.close()
 
-print("✅ Hoàn thành quá trình huấn luyện Model 2B.") 
+print("✅ Hoàn thành quá trình huấn luyện Model 2B.")
