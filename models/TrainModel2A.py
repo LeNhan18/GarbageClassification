@@ -128,7 +128,6 @@ model.compile(
     loss='categorical_crossentropy',
     metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=2, name='top_2_accuracy')]
 )
-
 # --- Callbacks ---
 callbacks = [
     ModelCheckpoint(
