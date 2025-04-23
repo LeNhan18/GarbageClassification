@@ -33,7 +33,7 @@ except Exception as e:
 data_dir = 'Z:\\GarbageClassification\\data'
 img_size = (240, 240)  # Tăng kích thước ảnh một chút
 batch_size = 16  # Giảm batch size để cải thiện độ chính xác
-epochs = 120  # Tăng số epochs hơn nữa
+epochs = 70  # Tăng số epochs hơn nữa
 input_shape = (240, 240, 3)
 
 # --- Data Augmentation mạnh hơn ---

@@ -30,7 +30,7 @@ except Exception as e:
 data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable'
 img_size = (240, 240)  # Tăng kích thước ảnh một chút
 batch_size = 16  # Giảm batch size để cải thiện độ chính xác
-epochs = 100  # Tăng epochs
+epochs = 70  # Tăng epochs
 input_shape = (240, 240, 3)
 
 # --- Data Augmentation mạnh hơn ---
@@ -198,3 +198,48 @@ plt.savefig(os.path.join(logs_dir, 'model2B_training_history.png'))
 plt.close()
 
 print("✅ Hoàn thành quá trình huấn luyện Model 2B.")
+# --- Tính class_weight để cân bằng dữ liệu ---
+from sklearn.utils import class_weight
+import numpy as np
+
+# Tính class weights
+class_weights = class_weight.compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(train_generator.classes),
+    y=train_generator.classes
+)
+class_weights_dict = dict(enumerate(class_weights))
+
+# ✅ In ra để kiểm tra
+print("\nClass weights:")
+for label, weight in class_weights_dict.items():
+    class_name = list(train_generator.class_indices.keys())[label]
+    print(f"{class_name}: {weight:.2f}")
+
+# --- Huấn luyện lại mô hình với class_weight ---
+print("\n⚠️ Tiến hành HUẤN LUYỆN LẠI Model 2B với class_weight...")
+history = model.fit(
+    train_generator,
+    validation_data=val_generator,
+    epochs=epochs,
+    callbacks=callbacks,
+    class_weight=class_weights_dict,
+    verbose=1
+)
+
+# --- Đánh giá chi tiết bằng classification_report ---
+from sklearn.metrics import classification_report
+
+# Dự đoán trên validation set
+val_generator.reset()
+pred_probs = model.predict(val_generator)
+pred_classes = np.argmax(pred_probs, axis=1)
+true_classes = val_generator.classes
+class_labels = list(val_generator.class_indices.keys())
+
+# In báo cáo phân loại
+report = classification_report(true_classes, pred_classes, target_names=class_labels)
+print("\n📋 Báo cáo phân loại Model 2B:")
+print(report)
+
+# (Không cần vẽ lại biểu đồ nếu không thay đổi kiến trúc/model)
