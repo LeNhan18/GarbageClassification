@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 
 # === Cấu hình thư mục dataset ===
-data_dir = r"Z:\\GarbageClassification\\data\\recyclable"  # Thay đường dẫn nếu cần
+data_dir = r"Z:\\GarbageClassification\\data\\non_recyclable"  # Thay đường dẫn nếu cần
 
 def count_images_per_class(base_dir):
     class_counts = defaultdict(int)

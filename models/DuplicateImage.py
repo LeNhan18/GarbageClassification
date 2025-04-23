@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 
 # --- Cấu hình ---
-data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable\\battery'  # Thư mục chứa dữ liệu
+data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable\\clothes'  # Thư mục chứa dữ liệu
 output_log_dir = 'Z:\\GarbageClassification\\logs'  # Thư mục lưu log
 backup_dir = 'Z:\\GarbageClassification\\backup\\trash'  # Thư mục lưu bản sao trước khi xóa
 similarity_threshold = 10  # Ngưỡng cho perceptual hash (tăng lên 10)
