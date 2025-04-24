@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 
 # --- Cấu hình ---
-data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable\\clothes'  # Thư mục chứa dữ liệu
+data_dir = 'Z:\\GarbageClassification\\data\\recyclable\\cardboard'  # Thư mục chứa dữ liệu
 output_log_dir = 'Z:\\GarbageClassification\\logs'  # Thư mục lưu log
 backup_dir = 'Z:\\GarbageClassification\\backup\\trash'  # Thư mục lưu bản sao trước khi xóa
 similarity_threshold = 10  # Ngưỡng cho perceptual hash (tăng lên 10)
@@ -18,7 +18,7 @@ def get_file_hash(file_path):
         with open(file_path, 'rb') as f:
             return hashlib.md5(f.read()).hexdigest()
     except Exception as e:
-        print(f"❌ Lỗi khi tính hash cho {file_path}: {e}")
+        print(f"Lỗi khi tính hash cho {file_path}: {e}")
         return None
 
 
@@ -28,7 +28,7 @@ def get_perceptual_hash(file_path):
         img = Image.open(file_path)
         return imagehash.difference_hash(img)  # Sử dụng difference hash thay vì average hash
     except Exception as e:
-        print(f"❌ Lỗi khi tính perceptual hash cho {file_path}: {e}")
+        print(f"Lỗi khi tính perceptual hash cho {file_path}: {e}")
         return None
 
 
@@ -49,8 +49,8 @@ def find_and_remove_duplicates(data_dir, backup_dir, output_log_dir):
             if file.lower().endswith(('.png', '.jpg', '.jpeg')):
                 image_files.append(os.path.join(root, file))
 
-    print(f"📸 Tìm thấy {len(image_files)} ảnh trong thư mục.")
-
+    print(f"Tìm thấy {len(image_files)} ảnh trong thư mục.")
+#Hash anh timf kiem so sanh anh khac nhau
     # Lưu trữ hash và đường dẫn
     hash_dict = {}
     duplicates = []

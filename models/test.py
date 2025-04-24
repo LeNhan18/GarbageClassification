@@ -9,7 +9,7 @@ from utils import preprocess_image, predict_single_image
 from TrainModel1 import train_generator
 
 # --- Load model ---
-model_path = 'model1_binary_recyclable.keras'  # hoặc model1_best.keras
+model_path = 'model1_binary_recyclable.h5'  # hoặc model1_best.keras
 model = load_model(model_path)
 # Tạo lại ánh xạ lớp nếu không có file json
 class_mapping = train_generator.class_indices
