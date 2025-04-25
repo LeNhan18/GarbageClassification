@@ -7,13 +7,13 @@ import time
 def load_models():
     try:
         # Load cả 3 model
-        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\models\\model1_binary_recyclable.h5')
-        model2a = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\models\\model2a_recyclable.h5')
-        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\models\\model2b_non_recyclable.h5')
-        print("✅ Đã tải tất cả models thành công!")
+        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_best.keras')
+        model2a = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2a_best.keras')
+        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2b_best.keras')
+        print("Đã tải tất cả models thành công!")
         return model1, model2a, model2b
     except Exception as e:
-        print(f"❌ Lỗi khi tải models: {e}")
+        print(f"Lỗi khi tải models: {e}")
         return None, None, None
 
 def preprocess_image(frame, target_size=(224, 224)):
@@ -80,10 +80,10 @@ def main():
     print("Đang khởi tạo camera...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ Không thể mở camera!")
+        print("Không thể mở camera!")
         return
     
-    print("✅ Đã khởi tạo camera thành công!")
+    print("Đã khởi tạo camera thành công!")
     print("Nhấn 'q' để thoát")
     
     # Biến đếm FPS
@@ -95,7 +95,7 @@ def main():
         # Đọc frame từ camera
         ret, frame = cap.read()
         if not ret:
-            print("❌ Không thể đọc frame từ camera!")
+            print("Không thể đọc frame từ camera!")
             break
         
         # Xử lý frame
