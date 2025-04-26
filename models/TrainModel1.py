@@ -173,7 +173,6 @@ model.compile(
         F1ScoreWithReshape(threshold=0.5) # Use the custom F1 Score metric
     ]
 )
-
 # --- Callbacks ---
 callbacks = [
     ModelCheckpoint(

@@ -3,18 +3,49 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array
 import time
+from tensorflow.keras.metrics import Metric
+from tensorflow.keras.saving import register_keras_serializable
+from tensorflow.keras import backend as K
+
+@register_keras_serializable()
+class F1ScoreWithReshape(Metric):
+    def __init__(self, name='f1_score', **kwargs):
+        super(F1ScoreWithReshape, self).__init__(name=name, **kwargs)
+        self.true_positives = self.add_weight(name='tp', initializer='zeros')
+        self.false_positives = self.add_weight(name='fp', initializer='zeros')
+        self.false_negatives = self.add_weight(name='fn', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_true = K.flatten(y_true)
+        y_pred = K.flatten(K.round(y_pred))
+        self.true_positives.assign_add(K.sum(y_true * y_pred))
+        self.false_positives.assign_add(K.sum((1 - y_true) * y_pred))
+        self.false_negatives.assign_add(K.sum(y_true * (1 - y_pred)))
+
+    def result(self):
+        precision = self.true_positives / (self.true_positives + self.false_positives + K.epsilon())
+        recall = self.true_positives / (self.true_positives + self.false_negatives + K.epsilon())
+        return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+    def reset_states(self):
+        self.true_positives.assign(0)
+        self.false_positives.assign(0)
+        self.false_negatives.assign(0)
 
 def load_and_prepare_model():
     try:
-        # Load model
-        model = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_best.keras')
+        # Load model với custom_objects
+        model = tf.keras.models.load_model(
+            'Z:\\GarbageClassification\\models\\model\\model1_best.keras',
+            custom_objects={'F1ScoreWithReshape': F1ScoreWithReshape}
+        )
         print("✅ Đã tải model thành công!")
         return model
     except Exception as e:
         print(f"❌ Lỗi khi tải model: {e}")
         return None
 
-def preprocess_image(frame, target_size=(224, 224)):
+def preprocess_image(frame, target_size=(240, 240)):
     # Resize frame
     img = cv2.resize(frame, target_size)
     # Convert to array và normalize
