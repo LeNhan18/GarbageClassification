@@ -20,7 +20,7 @@ try:
             gpus[0],
             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]
         )
-        print("✅ Đã cấu hình GPU thành công")
+        print("Đã cấu hình GPU thành công")
     else:
         print("❌ Không tìm thấy GPU")
 except Exception as e:
