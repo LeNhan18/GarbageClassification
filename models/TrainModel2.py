@@ -31,7 +31,7 @@ if gpus:
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
 img_size = (128, 128)
 batch_size = 128  # Tăng batch size để tăng tốc độ
-epochs = 30
+epochs = 20
 input_shape = (128, 128, 3)
 
 # --- Tiền xử lý dữ liệu với augmentation tối ưu ---
