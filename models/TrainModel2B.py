@@ -30,7 +30,7 @@ except Exception as e:
 data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable'
 img_size = (240, 240)  # Tăng kích thước ảnh một chút
 batch_size = 16  # Giảm batch size để cải thiện độ chính xác
-epochs = 70  # Tăng epochs
+epochs = 20  # Tăng epochs
 input_shape = (240, 240, 3)
 
 # --- Data Augmentation mạnh hơn ---
