@@ -72,13 +72,13 @@ def load_models():
         custom_objects = {"F1ScoreWithReshape": F1ScoreWithReshape}
 
         # Thêm compile=False để tránh lỗi khi tải model
-        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_best.keras',
+        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_final.keras',
                                             custom_objects=custom_objects,
                                             compile=False)
-        model2a = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2a_best.keras',
+        model2a = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2a_final.keras',
                                              custom_objects=custom_objects,
                                              compile=False)
-        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2b_best.keras',
+        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2b_final.keras',
                                              custom_objects=custom_objects,
                                              compile=False)
         print("Đã tải tất cả models thành công!")
