@@ -2,7 +2,6 @@ git clone https://github.com/LeNhan18/GarbageClassification.git
 # README.md
 
 ## ♻️ Hệ thống phân loại rác bằng 2 mô hình CNN (Python + Flutter)
-
 ### 📁 Cấu trúc thư mục dữ liệu
 ```
 data/
