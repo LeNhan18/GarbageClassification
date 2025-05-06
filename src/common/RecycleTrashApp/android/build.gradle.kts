@@ -1,3 +1,8 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import java.nio.file.Paths
+import org.gradle.api.JavaVersion
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+
 buildscript {
     repositories {
         google()
@@ -12,6 +17,13 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// ✅ Thêm cấu hình ép Gradle dùng Java 17 (dù máy bạn cài Java 22)
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
