@@ -36,7 +36,7 @@ def load_and_prepare_model():
     try:
         # Load model với custom_objects
         model = tf.keras.models.load_model(
-            'Z:\\GarbageClassification\\models\\model\\model1_best.keras',
+            'Z:\\GarbageClassification\\models\\model\\model1_final.keras',
             custom_objects={'F1ScoreWithReshape': F1ScoreWithReshape}
         )
         print("✅ Đã tải model thành công!")
