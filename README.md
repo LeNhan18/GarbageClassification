@@ -9,11 +9,18 @@ data/
 ├── binary/               # Dùng cho model1
 │   ├── recyclable/
 │   └── non_recyclable/
-└── recyclable/           # Dùng cho model2
+└── recyclable/           # Dùng cho model2a
     ├── plastic/
     ├── paper/
     ├── metal/
-    └── ...
+    └── glass/
+    └── cardboard/
+└── non_recyclable/       # Dùng cho model2b
+    ├── trash/
+    ├── battery/
+    ├── clothes/
+    └── shoes/
+    └── biological/
 ```
 
 ---
@@ -23,7 +30,8 @@ data/
 | File name         | Chức năng                                      |
 |-------------------|------------------------------------------------|
 | `train_model1.py` | Phân loại Tái chế / Không Tái chế (binary)    |
-| `train_model2.py` | Phân loại chi tiết các loại rác tái chế (CNN) |
+| `train_model2a.py` | Phân loại chi tiết các loại rác tái chế (CNN) |
+| `train_model2b.py` | Phân loại chi tiết các loại rác không tái chế (CNN) |
 | `predict.py`      | Dự đoán ảnh đầu vào qua 2 bước                 |
 | `utils.py`        | Hỗ trợ rename, resize, xử lý thư mục ảnh       |
 | `convert_tflite.py` | Convert model `.h5` sang `.tflite` để dùng Flutter |
@@ -44,7 +52,11 @@ python train_model1.py
 ```
 #### 2. Mô hình phân loại chi tiết các loại rác tái chế (Multi-class)
 ```bash
-python train_model2.py
+python train_model2a.py
+```
+#### 3. Mô hình phân loại chi tiết các loại rác không tái chế (Multi-class)
+```bash
+python train_model2b.py
 ```
 > Kết quả sẽ được lưu vào thư mục `models/`
 
