@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.recycletrashapp"
-    compileSdk = 35
+    compileSdkVersion(35)
     ndkVersion = "29.0.13113456"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,8 +23,8 @@ android {
         applicationId = "com.example.recycletrashapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdkVersion(flutter.minSdkVersion)
+        targetSdkVersion(flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
