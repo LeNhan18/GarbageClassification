@@ -203,7 +203,7 @@ history = model.fit(
 
 # --- Lưu mô hình và đánh giá ---
 model.save(os.path.join(models_dir, 'model1_final.keras'))
-print("✅ Đã lưu mô hình thành công!")
+print("Đã lưu mô hình thành công!")
 
 # Đánh giá mô hình
 val_metrics = model.evaluate(val_generator, verbose=1)
@@ -320,4 +320,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(logs_dir, 'model1_precision_recall_f1score.png'), dpi=300, bbox_inches='tight')
 plt.close()
 
-print("✅ Hoàn thành quá trình huấn luyện và đánh giá Model 1.")
+print("Hoàn thành quá trình huấn luyện và đánh giá Model 1.")

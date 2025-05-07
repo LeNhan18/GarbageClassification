@@ -22,11 +22,11 @@ try:
             gpus[0],
             [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)]
         )
-        print("✅ Đã cấu hình GPU thành công")
+        print("Đã cấu hình GPU thành công")
     else:
-        print("❌ Không tìm thấy GPU")
+        print("Không tìm thấy GPU")
 except Exception as e:
-    print(f"❌ Lỗi cấu hình GPU: {e}")
+    print(f"Lỗi cấu hình GPU: {e}")
 
 # --- Cấu hình ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
@@ -190,7 +190,7 @@ history = model.fit(
 
 # --- Lưu mô hình và đánh giá ---
 model.save(os.path.join(models_dir, 'model2A_final.keras'))
-print("✅ Đã lưu mô hình thành công!")
+print("Đã lưu mô hình thành công!")
 
 # Đánh giá mô hình
 val_metrics = model.evaluate(val_generator, verbose=1)
@@ -274,4 +274,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(logs_dir, 'model2A_training_history.png'), dpi=300, bbox_inches='tight')
 plt.close()
 
-print("✅ Hoàn thành quá trình huấn luyện và đánh giá Model 2A.")
+print("Hoàn thành quá trình huấn luyện và đánh giá Model 2A.")
