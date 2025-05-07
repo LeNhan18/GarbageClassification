@@ -21,16 +21,16 @@ def count_images_per_class(base_dir):
     return class_counts, total_images
 
 def analyze_class_distribution(class_counts, total_images):
-    print(f"\n📊 Tổng số ảnh: {total_images}")
+    print(f"\n Tổng số ảnh: {total_images}")
     print(f"{'Class':<25} {'Số ảnh':<10} {'Tỷ lệ (%)':<10}")
     print("-" * 50)
 
     for class_name, count in sorted(class_counts.items(), key=lambda x: x[1], reverse=True):
         ratio = (count / total_images) * 100
-        warning = "⚠️" if ratio < 10 else ""
+        warning = "đm" if ratio < 10 else ""
         print(f"{class_name:<25} {count:<10} {ratio:>6.2f}% {warning}")
 
-    print("\n⚠️ Cảnh báo nếu class < 10% tổng số ảnh → Có thể bị model học lệch.")
+    print("\nCảnh báo nếu class < 10% tổng số ảnh → Có thể bị model học lệch.")
 
 if __name__ == "__main__":
     class_counts, total_images = count_images_per_class(data_dir)
