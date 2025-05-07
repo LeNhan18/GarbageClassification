@@ -15,15 +15,15 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
-subprojects {
-    project.evaluationDependsOn(':app')
-}
+//subprojects {
+//    project.evaluationDependsOn(':app')
+//}
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
 
-wrapper {
-    gradleVersion = '8.7'
-    distributionType = Wrapper.DistributionType.ALL
-} 
+//task wrapper() {
+//    gradleVersion = '8.7'
+//    distributionType = Wrapper.DistributionType.ALL
+//}

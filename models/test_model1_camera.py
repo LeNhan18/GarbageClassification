@@ -39,10 +39,10 @@ def load_and_prepare_model():
             'Z:\\GarbageClassification\\models\\model\\model1_final.keras',
             custom_objects={'F1ScoreWithReshape': F1ScoreWithReshape}
         )
-        print("✅ Đã tải model thành công!")
+        print("Đã tải model thành công!")
         return model
     except Exception as e:
-        print(f"❌ Lỗi khi tải model: {e}")
+        print(f"Lỗi khi tải model: {e}")
         return None
 
 def preprocess_image(frame, target_size=(240, 240)):
@@ -84,10 +84,10 @@ def main():
     print("Đang khởi tạo camera...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ Không thể mở camera!")
+        print(" Không thể mở camera!")
         return
     
-    print("✅ Đã khởi tạo camera thành công!")
+    print("Đã khởi tạo camera thành công!")
     print("Nhấn 'q' để thoát")
     
     # Biến đếm FPS
@@ -99,7 +99,7 @@ def main():
         # Đọc frame từ camera
         ret, frame = cap.read()
         if not ret:
-            print("❌ Không thể đọc frame từ camera!")
+            print("Không thể đọc frame từ camera!")
             break
         
         # Xử lý frame
@@ -129,7 +129,7 @@ def main():
     # Giải phóng tài nguyên
     cap.release()
     cv2.destroyAllWindows()
-    print("✅ Đã đóng camera và kết thúc chương trình!")
+    print("Đã đóng camera và kết thúc chương trình!")
 
 if __name__ == "__main__":
     main() 
