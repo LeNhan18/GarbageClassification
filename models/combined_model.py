@@ -91,11 +91,25 @@ def load_models():
 def preprocess_image(frame, target_size=(240, 240)):
     # Resize frame
     img = cv2.resize(frame, target_size)
-    # Chuyển từ BGR sang RGB (OpenCV đọc ở dạng BGR, TensorFlow cần RGB)
+    
+    # Chuyển từ BGR sang RGB
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # Convert to array và normalize
+    
+    # Cải thiện độ tương phản
+    lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    cl = clahe.apply(l)
+    limg = cv2.merge((cl,a,b))
+    img = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
+    
+    # Giảm nhiễu
+    img = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
+    
+    # Chuẩn hóa
     img_array = img_to_array(img)
     img_array = img_array / 255.0
+    
     # Expand dimensions
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
@@ -121,7 +135,57 @@ def get_class_name(class_idx, is_recyclable):
     return classes.get(class_idx, "Không xác định")
 
 
-def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps):
+def detect_objects(frame):
+    # Chuyển đổi frame sang grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # Cải thiện độ tương phản
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+    
+    # Áp dụng Gaussian blur để giảm nhiễu
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # Phát hiện cạnh bằng Canny với ngưỡng thích ứng
+    edges = cv2.Canny(blurred, 30, 200)
+    
+    # Mở rộng cạnh để kết nối các cạnh gần nhau
+    kernel = np.ones((5,5), np.uint8)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+    
+    # Tìm contours
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Lọc contours theo diện tích và tỷ lệ khung hình
+    min_area = 5000  # Tăng diện tích tối thiểu
+    max_area = 150000  # Tăng diện tích tối đa
+    valid_contours = []
+    
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if min_area < area < max_area:
+            x, y, w, h = cv2.boundingRect(contour)
+            aspect_ratio = float(w)/h
+            # Lọc theo tỷ lệ khung hình
+            if 0.2 < aspect_ratio < 5:  # Tỷ lệ hợp lý
+                valid_contours.append(contour)
+    
+    # Tìm bounding boxes
+    boxes = []
+    for contour in valid_contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        # Thêm padding
+        padding = 10
+        x = max(0, x - padding)
+        y = max(0, y - padding)
+        w = min(frame.shape[1] - x, w + 2*padding)
+        h = min(frame.shape[0] - y, h + 2*padding)
+        boxes.append((x, y, w, h))
+    
+    return boxes
+
+
+def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps, boxes=None):
     # Xử lý kết quả từ model1
     pred_value = float(model1_pred[0][0]) if isinstance(model1_pred[0], np.ndarray) else float(model1_pred[0])
     recyclable = pred_value > 0.5
@@ -130,20 +194,43 @@ def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps):
     # Xử lý kết quả từ model2
     class_idx = np.argmax(model2_pred[0])
     confidence2 = float(model2_pred[0][class_idx])
-    class_name = get_class_name(class_idx, recyclable)  # Sử dụng kết quả thực tế của model1
+    class_name = get_class_name(class_idx, recyclable)
 
-    # Chọn màu dựa trên kết quả
-    color = (0, 255, 0) if recyclable else (0, 0, 255)
+    # Chỉ hiển thị kết quả khi độ tin cậy đủ cao
+    min_confidence = 0.6  # Ngưỡng độ tin cậy tối thiểu
+    
+    if confidence1 >= min_confidence and confidence2 >= min_confidence:
+        # Chọn màu dựa trên kết quả
+        color = (0, 255, 0) if recyclable else (0, 0, 255)
 
-    # Vẽ thông tin lên frame
-    cv2.putText(frame, f"Loai rac: {'Tái chế' if recyclable else 'Không tái chế'}",
-                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-    cv2.putText(frame, f"Phan loai: {class_name}",
-                (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-    cv2.putText(frame, f"Do tin cay: {confidence1 * 100:.1f}%",
-                (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-    cv2.putText(frame, f"Phan loai chi tiet: {confidence2 * 100:.1f}%",
-                (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        # Vẽ bounding boxes nếu có
+        if boxes:
+            for box in boxes:
+                x, y, w, h = box
+                # Vẽ khung
+                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                
+                # Vẽ nhãn với nền
+                label = f"{class_name} ({confidence2*100:.1f}%)"
+                (label_w, label_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+                cv2.rectangle(frame, (x, y - label_h - 10), (x + label_w, y), color, -1)
+                cv2.putText(frame, label, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+
+        # Vẽ thông tin tổng quan
+        cv2.putText(frame, f"Loai rac: {'Tái chế' if recyclable else 'Không tái chế'}",
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        cv2.putText(frame, f"Phan loai: {class_name}",
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        cv2.putText(frame, f"Do tin cay: {confidence1 * 100:.1f}%",
+                    (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+        cv2.putText(frame, f"Phan loai chi tiet: {confidence2 * 100:.1f}%",
+                    (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+    else:
+        # Hiển thị thông báo khi độ tin cậy thấp
+        cv2.putText(frame, "Khong du doan duoc", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128, 128, 128), 2)
+
+    # Hiển thị FPS
     cv2.putText(frame, f"FPS: {fps:.1f}",
                 (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
@@ -178,25 +265,20 @@ def main():
             print("Không thể đọc frame từ camera!")
             break
 
+        # Phát hiện vật thể
+        boxes = detect_objects(frame)
+
         # Xử lý frame
         processed_frame = preprocess_image(frame)
 
         try:
             # Dự đoán với model1
             model1_pred = model1.predict(processed_frame, verbose=0)
-            # Kiểm tra cấu trúc đầu ra của model1
-            print(f"Model1 prediction shape: {model1_pred.shape}, value: {model1_pred}")
-
-            # Xác định loại rác
-            pred_value = float(model1_pred[0][0]) if len(model1_pred.shape) > 1 and model1_pred.shape[1] > 1 else float(
-                model1_pred[0])
+            pred_value = float(model1_pred[0][0]) if len(model1_pred.shape) > 1 and model1_pred.shape[1] > 1 else float(model1_pred[0])
             is_recyclable = pred_value > 0.5
 
             # Dự đoán với model2 tương ứng
-            model2_pred = model2a.predict(processed_frame, verbose=0) if is_recyclable else model2b.predict(
-                processed_frame, verbose=0)
-            # Kiểm tra cấu trúc đầu ra của model2
-            print(f"Model2 prediction shape: {model2_pred.shape}, top class: {np.argmax(model2_pred[0])}")
+            model2_pred = model2a.predict(processed_frame, verbose=0) if is_recyclable else model2b.predict(processed_frame, verbose=0)
 
             # Tính FPS
             frame_count += 1
@@ -207,10 +289,9 @@ def main():
                 start_time = time.time()
 
             # Vẽ kết quả lên frame
-            frame = draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps)
+            frame = draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps, boxes)
 
         except Exception as e:
-            # Hiển thị lỗi nếu có
             print(f"Lỗi khi dự đoán: {e}")
             cv2.putText(frame, f"Loi: {str(e)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
