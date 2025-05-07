@@ -309,7 +309,7 @@ def main():
     # Giải phóng tài nguyên
     cap.release()
     cv2.destroyAllWindows()
-    print("✅ Đã đóng camera và kết thúc chương trình!")
+    print(" Đã đóng camera và kết thúc chương trình!")
 
 
 if __name__ == "__main__":
