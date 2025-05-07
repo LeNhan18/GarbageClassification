@@ -98,13 +98,17 @@ def preprocess_image(frame, target_size=(240, 240)):
     # Cải thiện độ tương phản
     lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     cl = clahe.apply(l)
     limg = cv2.merge((cl,a,b))
     img = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
     
-    # Giảm nhiễu
-    img = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
+    # Giảm nhiễu nhẹ hơn
+    img = cv2.fastNlMeansDenoisingColored(img, None, 7, 7, 5, 15)
+    
+    # Tăng độ sắc nét
+    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+    img = cv2.filter2D(img, -1, kernel)
     
     # Chuẩn hóa
     img_array = img_to_array(img)
@@ -140,25 +144,25 @@ def detect_objects(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # Cải thiện độ tương phản
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     gray = clahe.apply(gray)
     
     # Áp dụng Gaussian blur để giảm nhiễu
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
     # Phát hiện cạnh bằng Canny với ngưỡng thích ứng
-    edges = cv2.Canny(blurred, 30, 200)
+    edges = cv2.Canny(blurred, 20, 150)
     
     # Mở rộng cạnh để kết nối các cạnh gần nhau
-    kernel = np.ones((5,5), np.uint8)
+    kernel = np.ones((3,3), np.uint8)
     edges = cv2.dilate(edges, kernel, iterations=1)
     
     # Tìm contours
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # Lọc contours theo diện tích và tỷ lệ khung hình
-    min_area = 5000  # Tăng diện tích tối thiểu
-    max_area = 150000  # Tăng diện tích tối đa
+    min_area = 3000  # Giảm diện tích tối thiểu
+    max_area = 200000  # Tăng diện tích tối đa
     valid_contours = []
     
     for contour in contours:
@@ -167,7 +171,7 @@ def detect_objects(frame):
             x, y, w, h = cv2.boundingRect(contour)
             aspect_ratio = float(w)/h
             # Lọc theo tỷ lệ khung hình
-            if 0.2 < aspect_ratio < 5:  # Tỷ lệ hợp lý
+            if 0.1 < aspect_ratio < 10:  # Mở rộng tỷ lệ cho phép
                 valid_contours.append(contour)
     
     # Tìm bounding boxes
@@ -175,7 +179,7 @@ def detect_objects(frame):
     for contour in valid_contours:
         x, y, w, h = cv2.boundingRect(contour)
         # Thêm padding
-        padding = 10
+        padding = 15  # Tăng padding
         x = max(0, x - padding)
         y = max(0, y - padding)
         w = min(frame.shape[1] - x, w + 2*padding)
@@ -196,8 +200,8 @@ def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps, boxes=N
     confidence2 = float(model2_pred[0][class_idx])
     class_name = get_class_name(class_idx, recyclable)
 
-    # Chỉ hiển thị kết quả khi độ tin cậy đủ cao
-    min_confidence = 0.6  # Ngưỡng độ tin cậy tối thiểu
+    # Tăng ngưỡng độ tin cậy
+    min_confidence = 0.75  # Tăng ngưỡng độ tin cậy
     
     if confidence1 >= min_confidence and confidence2 >= min_confidence:
         # Chọn màu dựa trên kết quả
