@@ -72,7 +72,7 @@ def find_and_remove_duplicates(data_dir, backup_dir, output_log_dir):
         f.write(f"Duplicates found: {len(duplicates)}\n\n")
 
         if duplicates:
-            print(f"🗑️ Tìm thấy {len(duplicates)} ảnh trùng lặp. Bắt đầu xử lý...")
+            print(f"🗑Tìm thấy {len(duplicates)} ảnh trùng lặp. Bắt đầu xử lý...")
             for dup, orig in duplicates:
                 # Sao lưu ảnh trùng lặp vào backup_dir
                 backup_path = os.path.join(backup_dir, os.path.relpath(dup, data_dir))
@@ -86,11 +86,11 @@ def find_and_remove_duplicates(data_dir, backup_dir, output_log_dir):
                     print(log_message.strip())
                 except Exception as e:
                     log_message = f"Error removing {dup}: {e}\n"
-                    print(f"❌ {log_message.strip()}")
+                    print(f"{log_message.strip()}")
 
                 f.write(log_message)
         else:
-            print("✅ Không tìm thấy ảnh trùng lặp.")
+            print("Không tìm thấy ảnh trùng lặp.")
             f.write("No duplicates found.\n")
 
     return len(duplicates)
@@ -138,21 +138,21 @@ def find_similar_images(data_dir, output_log_dir, threshold=10):
         else:
             f.write("No similar images found.\n")
 
-    print(f"📊 Tìm thấy {len(similar_pairs)} cặp ảnh tương tự. Kiểm tra log tại {log_file}.")
+    print(f" Tìm thấy {len(similar_pairs)} cặp ảnh tương tự. Kiểm tra log tại {log_file}.")
     return similar_pairs
 
 
 # --- Chạy chương trình ---
 if __name__ == "__main__":
-    print("🔍 Bắt đầu kiểm tra và loại bỏ ảnh trùng lặp...")
+    print(" Bắt đầu kiểm tra và loại bỏ ảnh trùng lặp...")
 
     # Bước 1: Xóa ảnh giống hệt (MD5 hash)
     num_duplicates = find_and_remove_duplicates(data_dir, backup_dir, output_log_dir)
 
     # Bước 2: Kiểm tra ảnh tương tự (không xóa)
-    print("\n🔎 Kiểm tra ảnh tương tự...")
+    print("\n Kiểm tra ảnh tương tự...")
     similar_pairs = find_similar_images(data_dir, output_log_dir, similarity_threshold)
 
-    print(f"\n✅ Hoàn thành! Tìm thấy và xóa {num_duplicates} ảnh trùng lặp.")
-    print(f"📜 Log được lưu tại: {output_log_dir}")
-    print(f"💾 Bản sao ảnh trùng lặp được lưu tại: {backup_dir}")
+    print(f"\n Hoàn thành! Tìm thấy và xóa {num_duplicates} ảnh trùng lặp.")
+    print(f" Log được lưu tại: {output_log_dir}")
+    print(f" Bản sao ảnh trùng lặp được lưu tại: {backup_dir}")
