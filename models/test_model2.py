@@ -13,27 +13,27 @@ def test_model2():
     
     try:
         model = load_model(model_path)
-        print("✅ Đã tải mô hình thành công")
+        print("Đã tải mô hình thành công")
         
         with open(mapping_path, 'r') as f:
             class_mapping = json.load(f)
-        print("✅ Đã tải mapping thành công")
+        print("Đã tải mapping thành công")
     except Exception as e:
-        print(f"❌ Lỗi khi tải mô hình hoặc mapping: {e}")
+        print(f"Lỗi khi tải mô hình hoặc mapping: {e}")
         return
 
     # --- Mở camera ---
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ Không thể mở camera")
+        print("Không thể mở camera")
         return
 
-    print("🚀 Camera đã sẵn sàng. Bấm 'q' để thoát.")
+    print("Camera đã sẵn sàng. Bấm 'q' để thoát.")
     
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("❌ Không thể đọc frame từ camera")
+            print("Không thể đọc frame từ camera")
             break
 
         # Vẽ khung giữa ảnh
@@ -78,7 +78,7 @@ def test_model2():
 
     cap.release()
     cv2.destroyAllWindows()
-    print("✅ Đã đóng camera và kết thúc chương trình")
+    print("Đã đóng camera và kết thúc chương trình")
 
 if __name__ == '__main__':
     test_model2() 
