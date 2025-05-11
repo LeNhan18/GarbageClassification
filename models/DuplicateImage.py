@@ -12,7 +12,6 @@ backup_dir = 'Z:\\GarbageClassification\\backup\\trash'  # Thư mục lưu bản
 similarity_threshold = 10  # Ngưỡng cho perceptual hash (tăng lên 10)
 
 
-# --- Hàm tính hash giống hệt (MD5) ---
 def get_file_hash(file_path):
     try:
         with open(file_path, 'rb') as f:
@@ -20,9 +19,6 @@ def get_file_hash(file_path):
     except Exception as e:
         print(f"Lỗi khi tính hash cho {file_path}: {e}")
         return None
-
-
-# --- Hàm tính perceptual hash (dựa trên nội dung ảnh) ---
 def get_perceptual_hash(file_path):
     try:
         img = Image.open(file_path)
@@ -30,9 +26,6 @@ def get_perceptual_hash(file_path):
     except Exception as e:
         print(f"Lỗi khi tính perceptual hash cho {file_path}: {e}")
         return None
-
-
-# --- Tìm và loại bỏ ảnh trùng lặp (chỉ giống hệt) ---
 def find_and_remove_duplicates(data_dir, backup_dir, output_log_dir):
     # Tạo thư mục backup và log
     os.makedirs(backup_dir, exist_ok=True)
