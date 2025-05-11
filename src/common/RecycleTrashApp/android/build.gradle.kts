@@ -26,7 +26,13 @@ java {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
+android {
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
+}
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.set(newBuildDir)
 

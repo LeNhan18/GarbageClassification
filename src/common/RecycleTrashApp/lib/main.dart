@@ -210,7 +210,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
 
       _initializeControllerFuture = _controller!.initialize();
       await _initializeControllerFuture;
-      
+
       if (mounted) {
         setState(() {
           _isFrontCamera = !_isFrontCamera;
@@ -259,7 +259,7 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
     } catch (e) {
       print("Error taking picture: $e");
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -380,9 +380,9 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
                       inactiveColor: Colors.white30,
                       onChanged: _isInitialized
                           ? (value) async {
-                              setState(() => _zoomLevel = value);
-                              await _controller!.setZoomLevel(value);
-                            }
+                        setState(() => _zoomLevel = value);
+                        await _controller!.setZoomLevel(value);
+                      }
                           : null,
                     ),
                 ],
@@ -411,11 +411,11 @@ class _CameraPreviewPageState extends State<CameraPreviewPage> with WidgetsBindi
                       ),
                       onPressed: _isInitialized && _controller != null
                           ? () async {
-                              setState(() => _isFlashOn = !_isFlashOn);
-                              await _controller!.setFlashMode(
-                                _isFlashOn ? FlashMode.torch : FlashMode.off,
-                              );
-                            }
+                        setState(() => _isFlashOn = !_isFlashOn);
+                        await _controller!.setFlashMode(
+                          _isFlashOn ? FlashMode.torch : FlashMode.off,
+                        );
+                      }
                           : null,
                     ),
                     const SizedBox(width: 20),
