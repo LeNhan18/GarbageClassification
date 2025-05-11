@@ -1,4 +1,8 @@
-FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:2.15.0
+
+# Thiết lập biến môi trường
+ENV PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 # Cài đặt các thư viện cần thiết
 RUN apt-get update && apt-get install -y \
@@ -7,15 +11,20 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt các package Python
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
 # Tạo thư mục làm việc
 WORKDIR /app
 
+# Copy requirements trước để tận dụng cache
+COPY requirements.txt .
+
+# Cài đặt các package Python
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy code vào container
 COPY . .
+
+# Tạo volume cho dữ liệu
+VOLUME ["/app/datas"]
 
 # Chạy ứng dụng
 CMD ["python", "models/combined_model.py"] 
