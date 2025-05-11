@@ -1,17 +1,8 @@
-//Python
-tensorflow==2.12.0
-numpy==1.23.5
+tensorflow==2.15.0
+numpy>=1.19.2
 pillow==9.2.0
-matplotlib==3.6.2
-scikit-learn==1.1.2
+matplotlib>=3.3.4
+seaborn>=0.11.1
+scikit-learn>=0.24.1
 pandas==1.5.0
-opencv-python==4.6.0.66
-//Flutter
-dependencies:
-  flutter:
-    sdk: flutter
-  camera: ^0.10.0
-  path_provider: ^2.0.0
-//gradle  
-compileSdk = 33
-    ndkVersion = "29.0.13113456"
+opencv-python>=4.5.1

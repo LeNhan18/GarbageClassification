@@ -72,13 +72,13 @@ def load_models():
         custom_objects = {"F1ScoreWithReshape": F1ScoreWithReshape}
 
         # Thêm compile=False để tránh lỗi khi tải model
-        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model1_final.keras',
+        model1 = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model_final.keras',
                                             custom_objects=custom_objects,
                                             compile=False)
         model2a = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2a_final.keras',
                                              custom_objects=custom_objects,
                                              compile=False)
-        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2b_final.keras',
+        model2b = tf.keras.models.load_model('Z:\\GarbageClassification\\models\\model\\model2B_final.keras',
                                              custom_objects=custom_objects,
                                              compile=False)
         print("Đã tải tất cả models thành công!")
@@ -91,10 +91,10 @@ def load_models():
 def preprocess_image(frame, target_size=(240, 240)):
     # Resize frame
     img = cv2.resize(frame, target_size)
-    
+
     # Chuyển từ BGR sang RGB
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    
+
     # Cải thiện độ tương phản
     lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     l, a, b = cv2.split(lab)
@@ -102,18 +102,18 @@ def preprocess_image(frame, target_size=(240, 240)):
     cl = clahe.apply(l)
     limg = cv2.merge((cl,a,b))
     img = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
-    
+
     # Giảm nhiễu nhẹ hơn
     img = cv2.fastNlMeansDenoisingColored(img, None, 7, 7, 5, 15)
-    
+
     # Tăng độ sắc nét
     kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     img = cv2.filter2D(img, -1, kernel)
-    
+
     # Chuẩn hóa
     img_array = img_to_array(img)
     img_array = img_array / 255.0
-    
+
     # Expand dimensions
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
@@ -140,31 +140,34 @@ def get_class_name(class_idx, is_recyclable):
 
 
 def detect_objects(frame):
+    # Resize frame về kích thước 240x240
+    frame = cv2.resize(frame, (240, 240))
+    
     # Chuyển đổi frame sang grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
+
     # Cải thiện độ tương phản
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     gray = clahe.apply(gray)
-    
+
     # Áp dụng Gaussian blur để giảm nhiễu
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    
+
     # Phát hiện cạnh bằng Canny với ngưỡng thích ứng
     edges = cv2.Canny(blurred, 20, 150)
-    
+
     # Mở rộng cạnh để kết nối các cạnh gần nhau
     kernel = np.ones((3,3), np.uint8)
     edges = cv2.dilate(edges, kernel, iterations=1)
-    
+
     # Tìm contours
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     # Lọc contours theo diện tích và tỷ lệ khung hình
     min_area = 3000  # Giảm diện tích tối thiểu
     max_area = 200000  # Tăng diện tích tối đa
     valid_contours = []
-    
+
     for contour in contours:
         area = cv2.contourArea(contour)
         if min_area < area < max_area:
@@ -173,7 +176,7 @@ def detect_objects(frame):
             # Lọc theo tỷ lệ khung hình
             if 0.1 < aspect_ratio < 10:  # Mở rộng tỷ lệ cho phép
                 valid_contours.append(contour)
-    
+
     # Tìm bounding boxes
     boxes = []
     for contour in valid_contours:
@@ -185,7 +188,7 @@ def detect_objects(frame):
         w = min(frame.shape[1] - x, w + 2*padding)
         h = min(frame.shape[0] - y, h + 2*padding)
         boxes.append((x, y, w, h))
-    
+
     return boxes
 
 
@@ -202,7 +205,7 @@ def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps, boxes=N
 
     # Tăng ngưỡng độ tin cậy
     min_confidence = 0.75  # Tăng ngưỡng độ tin cậy
-    
+
     if confidence1 >= min_confidence and confidence2 >= min_confidence:
         # Chọn màu dựa trên kết quả
         color = (0, 255, 0) if recyclable else (0, 0, 255)
@@ -213,7 +216,7 @@ def draw_prediction(frame, model1_pred, model2_pred, is_recyclable, fps, boxes=N
                 x, y, w, h = box
                 # Vẽ khung
                 cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                
+
                 # Vẽ nhãn với nền
                 label = f"{class_name} ({confidence2*100:.1f}%)"
                 (label_w, label_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
