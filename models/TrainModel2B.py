@@ -3,31 +3,16 @@
 
 import os
 import numpy as np
+from keras.src.applications.efficientnet import EfficientNetB2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
-from tensorflow.keras.applications import EfficientNetB2
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 import matplotlib.pyplot as plt
 import tensorflow as tf
-
-# --- Cấu hình GPU để tăng tốc độ ---
-# Đảm bảo rằng TensorFlow có thể sử dụng GPU và cấp phát bộ nhớ động
-try:
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-        # Chỉ cấp phát bộ nhớ khi cần thiết để tránh lỗi hết bộ nhớ và linh hoạt hơn
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        print(f" Đã cấu hình GPU thành công. Số lượng GPU tìm thấy: {len(gpus)}")
-        # Nếu bạn có nhiều GPU, bạn có thể xem xét tf.distribute.MirroredStrategy để huấn luyện phân tán
-    else:
-        print(" Không tìm thấy GPU. Đang sử dụng CPU.")
-except Exception as e:
-    print(f" Lỗi cấu hình GPU: {e}. Đảm bảo driver và CUDA/cuDNN đã được cài đặt đúng cách.")
-
 # --- Cấu hình các tham số chính ---
 data_dir = 'Z:\\GarbageClassification\\data\\non_recyclable' # Thư mục dữ liệu cho rác không tái chế
-img_size = (240, 240)  # Kích thước ảnh phù hợp với EfficientNetB2
+img_size = (224, 224)  # Kích thước ảnh phù hợp với EfficientNetB2
 batch_size = 16        # Giảm batch size có thể cải thiện độ chính xác và phù hợp với VRAM hạn chế
 epochs = 100           # Tăng số epochs tối đa. EarlyStopping sẽ dừng sớm nếu mô hình hội tụ
 input_shape = (240, 240, 3) # Hình dạng đầu vào của ảnh (chiều cao, chiều rộng, kênh màu)

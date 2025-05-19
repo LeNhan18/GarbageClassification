@@ -5,7 +5,7 @@ import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
-from tensorflow.keras.applications import EfficientNetB2
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -27,10 +27,10 @@ except Exception as e:
 
 # --- Cấu hình các tham số chính ---
 data_dir = 'Z:\\GarbageClassification\\data\\recyclable'
-img_size = (240, 240)  # Kích thước ảnh phù hợp với EfficientNetB2
+img_size = (224, 224)  # Kích thước ảnh phù hợp với EfficientNetB2
 batch_size = 16        # Giảm batch size có thể cải thiện độ chính xác và phù hợp với VRAM hạn chế
 epochs = 100           # Tăng số epochs tối đa. EarlyStopping sẽ dừng sớm nếu mô hình hội tụ
-input_shape = (240, 240, 3) # Hình dạng đầu vào của ảnh (chiều cao, chiều rộng, kênh màu)
+input_shape = (224, 224, 3) # Hình dạng đầu vào của ảnh (chiều cao, chiều rộng, kênh màu)
 
 # --- Cấu hình Data Augmentation mạnh mẽ ---
 # Tăng cường khả năng khái quát hóa của mô hình
@@ -87,8 +87,8 @@ print(f"Thư mục lưu mô hình: {models_dir}")
 print(f"Thư mục lưu logs: {logs_dir}")
 
 # --- Xây dựng mô hình với EfficientNetB2 (Transfer Learning) ---
-print("\nĐang xây dựng kiến trúc mô hình với EfficientNetB2...")
-base_model = EfficientNetB2(
+print("\nĐang xây dựng kiến trúc mô hình với EfficientNetB0...")
+base_model = EfficientNetB0(
     weights='imagenet',     # Sử dụng trọng số tiền huấn luyện trên ImageNet
     include_top=False,      # Không bao gồm các lớp phân loại cuối cùng của ImageNet
     input_shape=input_shape
@@ -102,8 +102,8 @@ base_model = EfficientNetB2(
 # Ví dụ: có thể bắt đầu với fine_tune_at = len(base_model.layers) (đóng băng tất cả)
 # rồi sau đó giảm dần để fine-tune.
 fine_tune_at = 100 # Mở khóa và huấn luyện các lớp từ index 100 trở đi
-print(f"Số lớp của EfficientNetB2: {len(base_model.layers)}")
-print(f"Đóng băng {fine_tune_at} lớp đầu tiên của EfficientNetB2.")
+print(f"Số lớp của EfficientNetB0: {len(base_model.layers)}")
+print(f"Đóng băng {fine_tune_at} lớp đầu tiên của EfficientNetB0.")
 
 for layer in base_model.layers[:fine_tune_at]:
     layer.trainable = False
@@ -161,7 +161,7 @@ model.summary() # In tóm tắt cấu trúc mô hình
 # Các Callbacks giúp quản lý quá trình huấn luyện một cách hiệu quả
 callbacks = [
     ModelCheckpoint(
-        os.path.join(models_dir, 'model2A_best.keras'), # Lưu mô hình tốt nhất
+        os.path.join(models_dir, 'model2AA_best.keras'), # Lưu mô hình tốt nhất
         monitor='val_accuracy', # Theo dõi độ chính xác trên tập validation
         save_best_only=True,    # Chỉ lưu khi có cải thiện tốt hơn
         mode='max',             # Theo dõi giá trị lớn nhất (accuracy)
@@ -180,7 +180,7 @@ callbacks = [
         min_lr=1e-7,            # Ngưỡng LR tối thiểu
         verbose=1
     ),
-    CSVLogger(os.path.join(logs_dir, 'model2A_training.csv')), # Lưu lịch sử huấn luyện vào file CSV
+    CSVLogger(os.path.join(logs_dir, 'model2AA_training.csv')), # Lưu lịch sử huấn luyện vào file CSV
     # Thêm TensorBoard nếu bạn muốn theo dõi quá trình huấn luyện chi tiết hơn qua giao diện web
     # tf.keras.callbacks.TensorBoard(log_dir=logs_dir, histogram_freq=1)
 ]
@@ -196,7 +196,7 @@ history = model.fit(
 )
 
 # --- Lưu mô hình cuối cùng ---
-model.save(os.path.join(models_dir, 'model2a_final.keras'))
+model.save(os.path.join(models_dir, 'model2aa_final.keras'))
 print(" Đã lưu mô hình cuối cùng thành công!")
 
 # --- Đánh giá mô hình trên tập validation ---

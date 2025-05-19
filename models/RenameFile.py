@@ -1,5 +1,5 @@
 import os
-paths = "Z:\\GarbageClassification_backup\\data\\recyclable\\plastic"
+paths = "D:\\nl\\plastic_images\\plastic_images"
 start =7857
 #Đổi tên file
 for i ,filename in enumerate(sorted(os.listdir(paths))):
