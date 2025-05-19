@@ -32,4 +32,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "android"
 include(":app")
-include(":image_gallery_saver")
