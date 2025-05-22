@@ -25,7 +25,7 @@ def main():
         count = count_images(class_path)
         class_counts[class_name] = count
         total_images += count
-
+    print("\nKết quả Model 1")
     print("\n Kết quả rà soát dữ liệu:")
     print(f"Tổng ảnh: {total_images}")
     for class_name in class_names:

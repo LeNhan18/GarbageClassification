@@ -25,7 +25,7 @@ def rename_images_in_folder(folder_path, prefix="img", start_index=1):
             new_name = f"{prefix}{index}{ext}"
             os.rename(file_path, os.path.join(folder_path, new_name))
             index += 1
-    print(f"✅ Đã đổi tên toàn bộ ảnh trong {folder_path}")
+    print(f" Đã đổi tên toàn bộ ảnh trong {folder_path}")
 
 def resize_images_in_folder(folder_path, size=(150, 150)):
     """
@@ -40,7 +40,7 @@ def resize_images_in_folder(folder_path, size=(150, 150)):
                 img.save(file_path)
             except Exception as e:
                 print(f"⚠️ Lỗi với file {filename}: {e}")
-    print(f"✅ Đã resize ảnh trong {folder_path} về {size}")
+    print(f" Đã resize ảnh trong {folder_path} về {size}")
 
 def prepare_all_subfolders(root_dir, rename_prefix="img", resize_size=(150, 150)):
     """

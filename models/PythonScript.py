@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 
 # === Cấu hình thư mục dataset ===
-data_dir = r"Z:\\GarbageClassification\\data\\non_recyclable"  # Thay đường dẫn nếu cần
+data_dir = r"Z:\\GarbageClassification\\data\\recyclable"  # Thay đường dẫn nếu cần
 
 def count_images_per_class(base_dir):
     class_counts = defaultdict(int)
@@ -33,5 +33,6 @@ def analyze_class_distribution(class_counts, total_images):
     print("\nCảnh báo nếu class < 10% tổng số ảnh → Có thể bị model học lệch.")
 
 if __name__ == "__main__":
+    print("Kết quả model 2a\n")
     class_counts, total_images = count_images_per_class(data_dir)
     analyze_class_distribution(class_counts, total_images)
