@@ -37,6 +37,10 @@ dependencies:
   google_fonts: ^6.2.1
   path_provider: ^2.1.1
   universal_html: ^2.2.4
+  #Gói cần thiết cho AI
+  tflite_flutter: ^0.10.4
+  image_picker: ^1.0.0
+  image: ^4.0.3
 #  image_gallery_saver: ^2.0.3
 
   # The following adds the Cupertino Icons font to your application.
