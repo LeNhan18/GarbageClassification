@@ -19,7 +19,6 @@
       print("No camera found!");
     }
   }
-
   Future<void> _requestCameraPermission() async {
     try {
       PermissionStatus status = await Permission.camera.request();
