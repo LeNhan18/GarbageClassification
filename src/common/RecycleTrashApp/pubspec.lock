@@ -190,6 +190,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.3"
+  flutter_platform_widgets:
+    dependency: "direct main"
+    description:
+      name: flutter_platform_widgets
+      sha256: "107d5bc9a167b4e268cba44075ee399b6b2c63d44ede28f7e8c983d7fa4b59be"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.5"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -504,6 +512,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -565,6 +581,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.4"
+  tflite_flutter:
+    dependency: "direct main"
+    description:
+      name: tflite_flutter
+      sha256: d5acf30411b6a4ee299be25bad5a44e7fc103231fefaecb1c27f42df48251eb9
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.10.1"
   typed_data:
     dependency: transitive
     description:
