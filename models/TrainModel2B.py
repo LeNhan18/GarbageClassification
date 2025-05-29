@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import tensorflow as tf # Nên import tensorflow trước
+from cv2.gapi import kernel
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models, regularizers, optimizers
 from tensorflow.keras.applications import EfficientNetB2 # Sửa đường dẫn import
@@ -11,6 +12,8 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from datetime import datetime # Thêm datetime nếu chưa có
+
+from CovertTFlite import keras_model_path
 
 # --- Cấu hình GPU ---
 try:
@@ -154,6 +157,8 @@ model = models.Sequential([
     layers.Dense(512, kernel_regularizer=regularizers.l2(0.0005), activation='relu'),
     layers.BatchNormalization(),
     layers.Dropout(0.4),
+    layers.Dense(256, kernel_regularizer= regularizers.l2(0.0005), activation='relu'),
+    layers.Dropout(0.3),
     layers.Dense(num_classes, activation='softmax')
 ])
 

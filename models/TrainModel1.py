@@ -27,8 +27,8 @@ root_output_dir = 'Z:\\GarbageClassification'  # Đặt thư mục gốc theo c�
 models_dir_base_name = 'Model1_EfficientNetB2_BalancedTune'  # Cập nhật tên để phản ánh điều chỉnh
 logs_dir_base_name = f'logs_{models_dir_base_name}'
 
-models_dir = os.path.join(root_output_dir, 'models', models_dir_base_name, timestamp)
-logs_dir = os.path.join(root_output_dir, 'logs', logs_dir_base_name, timestamp)
+models_dir = os.path.join(root_output_dir, 'models_Model1_EfficientNetB2', models_dir_base_name, timestamp)
+logs_dir = os.path.join(root_output_dir, 'logs_Model1_EfficientNetB2', logs_dir_base_name, timestamp)
 
 os.makedirs(models_dir, exist_ok=True)
 os.makedirs(logs_dir, exist_ok=True)
@@ -66,7 +66,7 @@ try:
         subset='training',
         shuffle=True,
     )
-
+                                 
     val_generator = val_datagen.flow_from_directory(
         data_dir,
         target_size=img_size,
@@ -97,15 +97,15 @@ model = models.Sequential([
     layers.GlobalAveragePooling2D(),
     layers.BatchNormalization(),
 
-    layers.Dense(256, kernel_regularizer=regularizers.l2(0.0005), name="dense_1"),  # Giảm L2 từ 0.001 trở lại 0.0005
+    layers.Dense(256, kernel_regularizer=regularizers.l2(0.0005), name="dense_1"),
     layers.BatchNormalization(),
     layers.Activation('relu'),
     layers.Dropout(0.5),
 
-    layers.Dense(128, kernel_regularizer=regularizers.l2(0.0005), name="dense_2"),  # Đổi tên từ dense_1 thành dense_2
-    layers.BatchNormalization(name="bn_dense_2"),  # Đổi tên từ bn_dense_1 thành bn_dense_2
-    layers.Activation('relu', name="relu_2"),  # Đổi tên từ relu_1 thành relu_2
-    layers.Dropout(0.4, name="dropout_2"),  # Đổi tên từ dropout_1 thành dropout_2
+    layers.Dense(128, kernel_regularizer=regularizers.l2(0.0005), name="dense_2"),
+    layers.BatchNormalization(name="bn_dense_2"),
+    layers.Activation('relu', name="relu_2"),
+    layers.Dropout(0.4, name="dropout_2"),
 
     layers.Dense(num_classes, activation='sigmoid', dtype='float32', name="output_layer")
 ])

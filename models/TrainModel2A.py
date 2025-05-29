@@ -159,21 +159,20 @@ for layer in base_model.layers[:fine_tune_at]:
 
 model = models.Sequential([
     base_model,
-    layers.GlobalAveragePooling2D(),  # Giảm chiều dữ liệu trong khi giữ lại thông tin không gian
-    layers.BatchNormalization(),  # Giúp ổn định quá trình huấn luyện
+    layers.GlobalAveragePooling2D(),
+    layers.BatchNormalization(),
 
-    # First Dense Block
-    # Tăng neurons và áp dụng L2 regularization để kiểm soát overfitting
+
     layers.Dense(1024, kernel_regularizer=regularizers.l2(0.0005), activation='relu'),
     layers.BatchNormalization(),
-    layers.Dropout(0.5),  # Tỷ lệ Dropout giúp giảm overfitting
+    layers.Dropout(0.5),
 
-    # Second Dense Block - thêm một lớp hidden để tăng khả năng học các đặc trưng phức tạp
+
     layers.Dense(512, kernel_regularizer=regularizers.l2(0.0005), activation='relu'),
     layers.BatchNormalization(),
     layers.Dropout(0.4),
 
-    # Output Layer: Số neurons bằng số lượng lớp phân loại, activation='softmax' cho phân loại đa lớp
+
     layers.Dense(num_classes, activation='softmax')
 ])
 
