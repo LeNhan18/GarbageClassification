@@ -1,5 +1,0 @@
-Duplicate Removal Log - 20250423_233143
-Total images scanned: 5324
-Duplicates found: 0
-
-No duplicates found.
