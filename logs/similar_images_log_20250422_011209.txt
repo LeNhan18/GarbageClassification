@@ -1,6 +1,0 @@
-Similar Images Log - 20250422_011209
-Total images scanned: 5324
-Similarity threshold: 10
-Similar pairs found: 0
-
-No similar images found.
