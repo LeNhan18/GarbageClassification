@@ -1,0 +1,8 @@
+                precision    recall  f1-score   support
+
+non_recyclable       0.50      1.00      0.67      2028
+    recyclable       0.00      0.00      0.00      1989
+
+      accuracy                           0.50      4017
+     macro avg       0.25      0.50      0.34      4017
+  weighted avg       0.25      0.50      0.34      4017
