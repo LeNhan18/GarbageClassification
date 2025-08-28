@@ -40,3 +40,90 @@ assets/labels.txt
 *.tmp
 
 .idea/
+
+# --- Project-specific ignores ---
+# Model weights and artifacts
+*.keras
+*.h5
+*.hdf5
+*.pb
+*.pbtxt
+*.tflite
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.weights
+models/**/checkpoints/
+models/**/runs/
+models/**/logs/
+models/**/artifacts/
+
+# Datasets and raw media
+data/
+dataset/
+datasets/
+**/images/
+**/image/
+**/imgs/
+**/media/
+**/videos/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.gif
+*.webp
+*.mp4
+*.avi
+*.mov
+
+# Labels/annotations and large data files
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.feather
+*.npz
+*.npy
+
+# Training outputs (generic)
+runs/
+logs/
+checkpoints/
+outputs/
+artifacts/
+wandb/
+mlruns/
+.tensorboard/
+tensorboard/
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# --- Targeted ignores under models/ ---
+# Keep Python sources but ignore large artifacts/outputs
+models/Model_Final/
+models/model2B_EfficientNetB2_output_*/
+models/model1_ResNet50_output/
+models/model_EfficientB2/
+models/model_EfficientNetB2/
+models/model_mobilenetv2_single_phase/
+models/model_mobilenetv2_improved/
+models/model_binary_classification_single_phase/
+models/model_mobilenetv2_phase/
+models/logs_*/
+models/logs/
+models/logs_Model*/
+models/object_detection/
+models/Model1_*/
+models/Model2B_ResNet/
+
+# Do not ignore essential code files in models/
+!models/*.py
+!models/.gitkeep
+!models/.gitattributes
