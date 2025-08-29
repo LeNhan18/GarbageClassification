@@ -78,7 +78,7 @@ datasets/
 *.avi
 *.mov
 
-# Unignore images that are referenced in README
+
 !models/logs_EfficientNetB2/model2a_EfficientNetB2_training_history.png
 !models/model2B_EfficientNetB2_output_20250522-220956/logs/model_2B_EfficientNetB2_training_history.png
 
