@@ -13,6 +13,10 @@ API gồm hai chức năng:
 ![YOLOv8](Image/YOLOV8.jpg)
 ![Lịch sử](Image/LichSu.jpg)
 
+#### Training history (EfficientNetB2)
+![Model 2A Training History](models/logs_EfficientNetB2/model2a_EfficientNetB2_training_history.png)
+![Model 2B Training History](models/model2B_EfficientNetB2_output_20250522-220956/logs/model_2B_EfficientNetB2_training_history.png)
+
 ---
 
 ### ⚙️ Cài đặt môi trường (Python >= 3.8)
