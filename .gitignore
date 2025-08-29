@@ -78,9 +78,14 @@ datasets/
 *.avi
 *.mov
 
+# Allow README images in Image/
+!Image/
+!Image/*.jpg
+!Image/*.jpeg
+!Image/*.png
 
-!models/logs_EfficientNetB2/model2a_EfficientNetB2_training_history.png
-!models/model2B_EfficientNetB2_output_20250522-220956/logs/model_2B_EfficientNetB2_training_history.png
+!Image/model2a_EfficientNetB2_training_history.png
+!Image/model_2B_EfficientNetB2_training_history.png
 
 # Labels/annotations and large data files
 *.csv
