@@ -54,7 +54,7 @@ curl -X POST "http://localhost:8000/classify_garbage" -F "file=@path/to/image.jp
 
 ---
 
-### 📁 Cấu trúc thư mục dữ liệu (gợi ý)
+###  Cấu trúc thư mục dữ liệu (gợi ý)
 ```
 data/
 ├── binary/               # Dùng cho model1
@@ -76,7 +76,7 @@ data/
 
 ---
 
-### 📦 Các file Python chính
+###  Các file Python chính
 
 | File name                         | Chức năng |
 |-----------------------------------|-----------|
@@ -90,21 +90,21 @@ data/
 
 ---
 
-### 🔄 Convert mô hình sang TensorFlow Lite (dùng cho Flutter)
+###  Convert mô hình sang TensorFlow Lite (dùng cho Flutter)
 ```bash
 python models/CovertTFlite.py
 ```
 
 ---
 
-### 🛠️ Xử lý ảnh: Đổi tên, resize
+###  Xử lý ảnh: Đổi tên, resize
 ```bash
 python models/utils.py
 ```
 
 ---
 
-### ✅ Gợi ý dữ liệu
+###  Gợi ý dữ liệu
 - Tên folder ảnh không dùng dấu/khoảng trắng
 - Resize ảnh về kích thước phù hợp (vd 224x224)
 - Nên có >200 ảnh mỗi lớp
