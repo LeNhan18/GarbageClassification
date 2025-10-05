@@ -17,6 +17,8 @@ API gồm hai chức năng:
 ![Model 2A Training History](Image/model2a_EfficientNetB2_training_history.png)
 ![Model 2B Training History](Image/model_2B_EfficientNetB2_training_history.png)
 
+Accuracy của model đạt được >85%
+Loss nằm gần 1
 ---
 
 ### ⚙️ Cài đặt môi trường (Python >= 3.8)
