@@ -16,7 +16,7 @@ A comprehensive waste classification system using computer vision and deep learn
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-00FFFF?style=flat&logo=YOLO&logoColor=black)
 ![EfficientNet](https://img.shields.io/badge/EfficientNetB2-FF6F00?style=flat&logo=tensorflow&logoColor=white)
 
-## Features
+## Features ()
 
 ### Core AI/ML Capabilities
 - **Advanced Object Detection**: YOLOv8-based real-time object detection with bounding box visualization
