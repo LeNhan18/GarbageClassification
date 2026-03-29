@@ -170,6 +170,30 @@ A comprehensive waste classification system using computer vision and deep learn
 ### Model 2B (EfficientNetB2) Training History  
 ![Model 2B Training History](Image/model_2B_EfficientNetB2_training_history.png)
 
+## Pretrained Model on Hugging Face
+
+A pre-trained EfficientNetB2 model for garbage classification is available on Hugging Face:
+
+Model repository: https://huggingface.co/LeNhan18/ClassifyGarbageEfficientNetB2
+
+Quick download using huggingface_hub (Python):
+
+```python
+from huggingface_hub import hf_hub_download
+# Replace 'model.keras' with the actual filename stored in the repo if different
+local_path = hf_hub_download(repo_id="LeNhan18/ClassifyGarbageEfficientNetB2", filename="model.keras")
+print("Downloaded model to:", local_path)
+```
+
+Example to load with TensorFlow / Keras:
+
+```python
+from tensorflow import keras
+model = keras.models.load_model(local_path)
+```
+
+See the Hugging Face model page for license, file names and additional details: https://huggingface.co/LeNhan18/ClassifyGarbageEfficientNetB2
+
 ## Prerequisites
 
 - **Python**: 3.8 or higher
