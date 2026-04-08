@@ -4,51 +4,54 @@
 
 # Garbage Classification System
 
-Hệ thống phân loại rác bằng thị giác máy tính, kết hợp:
-- YOLOv8 cho phát hiện đối tượng
-- EfficientNetB2 cho phân loại theo pipeline nhiều tầng
-- FastAPI cho backend inference
-- Flutter cho ứng dụng di động đa nền tảng
+An end-to-end waste classification system that combines computer vision, deep learning, and mobile deployment. The project integrates:
 
-## Muc Luc
+- YOLOv8 for object detection
+- EfficientNetB2 for multi-stage waste classification
+- FastAPI for backend inference services
+- Flutter for cross-platform mobile access
 
-- [1. Tong Quan](#1-tong-quan)
-- [2. Kien Truc He Thong](#2-kien-truc-he-thong)
-- [3. Cong Nghe Su Dung](#3-cong-nghe-su-dung)
-- [4. Cau Truc Thu Muc](#4-cau-truc-thu-muc)
-- [5. Cai Dat](#5-cai-dat)
-- [6. Chay Ung Dung](#6-chay-ung-dung)
-- [7. API Endpoints](#7-api-endpoints)
-- [8. Mo Hinh Da Huấn Luyen](#8-mo-hinh-da-huan-luyen)
-- [9. Hinh Anh Minh Hoa](#9-hinh-anh-minh-hoa)
-- [10. Huong Dan Luyen Mo Hinh](#10-huong-dan-luyen-mo-hinh)
-- [11. Ung Dung Flutter](#11-ung-dung-flutter)
-- [12. Dong Gop](#12-dong-gop)
-- [13. License](#13-license)
+## Table of Contents
 
-## 1. Tong Quan
+- [1. Overview](#1-overview)
+- [2. System Architecture](#2-system-architecture)
+- [3. Technology Stack](#3-technology-stack)
+- [4. Project Structure](#4-project-structure)
+- [5. Requirements](#5-requirements)
+- [6. Installation](#6-installation)
+- [7. Running the Backend](#7-running-the-backend)
+- [8. API Endpoints](#8-api-endpoints)
+- [9. Trained Models](#9-trained-models)
+- [10. Screenshots](#10-screenshots)
+- [11. Model Training](#11-model-training)
+- [12. Flutter App](#12-flutter-app)
+- [13. Contribution Guide](#13-contribution-guide)
+- [14. License](#14-license)
 
-Du an huong den bai toan phan loai rac trong thuc te voi 2 giai doan:
+## 1. Overview
 
-1. Phan loai nhi phan: recyclable vs non_recyclable
-2. Phan loai chi tiet theo nhom con
+This project addresses real-world waste classification with a two-stage pipeline:
 
-Muc tieu:
-- Tang toc do phan loai anh
-- Ho tro tich hop backend va mobile
-- De mo rong them nhom rac moi trong tuong lai
+1. Binary classification: recyclable vs non-recyclable
+2. Fine-grained classification into waste subcategories
 
-## 2. Kien Truc He Thong
+Goals:
 
-Pipeline tong quan:
+- Improve image classification speed and accuracy
+- Support both backend and mobile integration
+- Make the pipeline easy to extend with new waste categories
 
-1. Nguoi dung gui anh (API hoac app mobile)
-2. YOLOv8 (tuy chon) phat hien vung doi tuong
-3. Model 1 phan loai recyclable / non_recyclable
-4. Model 2A hoac 2B phan loai chi tiet
-5. Tra ket qua gom nhan va do tin cay
+## 2. System Architecture
 
-## 3. Cong Nghe Su Dung
+High-level pipeline:
+
+1. A user submits an image through the API or mobile app
+2. YOLOv8 optionally detects the target object in the image
+3. Model 1 classifies the image as recyclable or non-recyclable
+4. Model 2A or 2B performs detailed subcategory classification
+5. The system returns the predicted label and confidence score
+
+## 3. Technology Stack
 
 ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=flat&logo=TensorFlow&logoColor=white)
@@ -58,7 +61,7 @@ Pipeline tong quan:
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-00FFFF?style=flat&logo=YOLO&logoColor=black)
 ![EfficientNetB2](https://img.shields.io/badge/EfficientNetB2-FF6F00?style=flat&logo=tensorflow&logoColor=white)
 
-## 4. Cau Truc Thu Muc
+## 4. Project Structure
 
 ```text
 GarbageClassification/
@@ -93,15 +96,15 @@ GarbageClassification/
 `-- README.md
 ```
 
-## 5. Cai Dat
+## 5. Requirements
 
-### Yeu cau
+Before running the project, make sure you have:
 
-- Python 3.8+
-- pip moi
-- Khuyen nghi RAM toi thieu 4GB
+- Python 3.8 or later
+- An up-to-date version of pip
+- At least 4 GB of RAM recommended
 
-### Cai thu vien
+## 6. Installation
 
 ```bash
 git clone https://github.com/LeNhan18/GarbageClassification.git
@@ -109,28 +112,43 @@ cd GarbageClassification
 pip install -r requirements.txt
 ```
 
-## 6. Chay Ung Dung
+Optional manual installation:
 
-### Chay FastAPI backend
+```bash
+pip install fastapi uvicorn tensorflow pillow opencv-python ultralytics pydantic
+```
+
+## 7. Running the Backend
+
+Start the FastAPI server:
 
 ```bash
 python -m uvicorn models.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Sau khi chay thanh cong:
+After startup, the following endpoints are available:
+
 - API docs: http://localhost:8000/docs
 - Health check: http://localhost:8000/health
 
-## 7. API Endpoints
+### Environment Variables
 
-| Method | Endpoint | Mo ta |
+| Variable | Description | Default |
 |---|---|---|
-| GET | / | Thong tin co ban cua API |
-| GET | /health | Kiem tra trang thai model |
-| POST | /predict | Phat hien doi tuong bang YOLOv8 |
-| POST | /classify_garbage | Phan loai rac bang EfficientNetB2 |
+| `MODEL_BASE_PATH` | Directory containing EfficientNetB2 models | `./models/model/` |
+| `YOLO_MODEL_PATH` | Path to the YOLO `.pt` model file | `./models/yolo.pt` |
+| `MAX_FILE_SIZE` | Maximum upload file size | `10MB` |
 
-### Vi du goi API
+## 8. API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | / | Basic API information |
+| GET | /health | Model loading and service health status |
+| POST | /predict | YOLOv8 object detection |
+| POST | /classify_garbage | Garbage classification with EfficientNetB2 |
+
+### Example API Requests
 
 ```bash
 curl -X POST "http://localhost:8000/classify_garbage" \
@@ -142,20 +160,21 @@ curl -X POST "http://localhost:8000/predict" \
   -F "file=@path/to/image.jpg"
 ```
 
-## 8. Mo Hinh Da Huan Luyen
+## 9. Trained Models
 
-Model da train duoc luu tai:
+Pretrained model files are stored in:
+
 - models/model/model1_binary_recyclable.keras
 - models/model/model1_best.keras
 - models/model/model2_best.keras
 - models/model/model2b_best.keras
 
-### Mo hinh tren Hugging Face
+### Hugging Face Model
 
 Repository:
 - https://huggingface.co/LeNhan18/ClassifyGarbageEfficientNetB2
 
-Vi du tai model:
+Example download code:
 
 ```python
 from huggingface_hub import hf_hub_download
@@ -167,7 +186,7 @@ local_path = hf_hub_download(
 print(local_path)
 ```
 
-## 9. Hinh Anh Minh Hoa
+## 10. Screenshots
 
 | Main Interface | EfficientNetB2 Classification |
 |:--:|:--:|
@@ -177,9 +196,9 @@ print(local_path)
 |:--:|:--:|
 | ![YOLO Interface](Image/YOLOV8.jpg) | ![History Interface](Image/LichSu.jpg) |
 
-## 10. Huong Dan Luyen Mo Hinh
+## 11. Model Training
 
-Mot so script training co san:
+Available training scripts:
 
 ```bash
 python models/TrainModel1.py
@@ -188,18 +207,19 @@ python models/train_model1_improved.py
 python models/Train_Model2B_ResNet.py
 ```
 
-Chuyen doi sang TensorFlow Lite:
+Convert a trained model to TensorFlow Lite:
 
 ```bash
 python models/CovertTFlite.py
 ```
 
-## 11. Ung Dung Flutter
+## 12. Flutter App
 
-Duong dan app mobile:
+The mobile application is located at:
+
 - src/common/RecycleTrashApp/
 
-Chay app Flutter:
+To run the Flutter app:
 
 ```bash
 cd src/common/RecycleTrashApp
@@ -207,14 +227,14 @@ flutter pub get
 flutter run
 ```
 
-## 12. Dong Gop
+## 13. Contribution Guide
 
-1. Fork repository
-2. Tao nhanh moi: git checkout -b feature/ten-tinh-nang
-3. Commit: git commit -m "feat: mo ta thay doi"
-4. Push nhanh: git push origin feature/ten-tinh-nang
-5. Tao Pull Request
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "feat: describe your change"`
+4. Push the branch: `git push origin feature/your-feature`
+5. Open a pull request
 
-## 13. License
+## 14. License
 
-Du an duoc phat hanh theo MIT License.
+This project is licensed under the MIT License.
