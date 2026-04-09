@@ -213,6 +213,26 @@ Convert a trained model to TensorFlow Lite:
 python models/CovertTFlite.py
 ```
 
+### Training Metrics Summary (EfficientNetB2)
+
+The two charts below summarize the full training behavior of Model 2A and Model 2B across key metrics: Accuracy, Loss, Top-2 Accuracy, Precision, Recall, and AUC.
+
+#### Model 2B Training Curves
+
+![Model 2B EfficientNetB2 Training History](Image/model_2B_EfficientNetB2_training_history.png)
+
+#### Model 2A Training Curves
+
+![Model 2A EfficientNetB2 Training History](Image/model2a_EfficientNetB2_training_history.png)
+
+#### Professional Interpretation
+
+- Convergence quality: Both models optimize smoothly, with steadily decreasing loss and stable validation trends, indicating healthy learning dynamics.
+- Generalization behavior: Validation curves closely track training curves in early and mid epochs, then diverge moderately near later epochs, which is expected for high-capacity CNN architectures.
+- Classification robustness: Precision, Recall, and AUC remain high across most epochs, reflecting strong class separation and balanced predictive behavior.
+- Top-2 reliability: Top-2 Accuracy reaches a high level early and remains stable, indicating robust ranking performance for hard or near-boundary samples.
+- Deployment recommendation: The models are ready for practical inference; selecting checkpoints at the best val_loss or val_auc epochs is recommended to minimize late-stage overfitting risk.
+
 ## 12. Flutter App
 
 The mobile application is located at:
